@@ -1,0 +1,33 @@
+{
+    "metadata": {
+        "clusterVersion": "1.150.0.20180628-152820",
+        "configurationVersions": [
+            0
+        ]
+    },
+    "id": "",
+    "name": "yBusiness Process Task1",
+    "enabled": true,
+    "rules": [
+        {
+            "id": "",
+            "enabled": true,
+            "fileName": "",
+            "className": "de.hybris.platform.processengine.process.ProcessengineTaskRunner",
+            "matcher": "EQUALS",
+            "methodRules": [
+                {
+                    "id": "",
+                    "methodName": "runProcessTask",
+                    "argumentTypes": [
+                        "de.hybris.platform.processengine.model.ProcessTaskModel"
+                    ],
+                    "returnType": "java.lang.String"
+                }
+            ],
+            "annotations": []
+        }
+    ],
+    "queueEntryPoint": false,
+    "processGroups": []
+}

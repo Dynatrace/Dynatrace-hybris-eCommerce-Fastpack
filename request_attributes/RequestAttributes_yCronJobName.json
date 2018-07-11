@@ -1,0 +1,44 @@
+{
+    "metadata": {
+        "clusterVersion": "1.150.0.20180628-152820",
+        "configurationVersions": [
+            0
+        ]
+    },
+    "id": "",
+    "name": "yCronJobName_0711_01",
+    "enabled": true,
+    "dataType": "STRING",
+    "dataSources": [
+        {
+            "enabled": true,
+            "source": "METHOD_PARAM",
+            "valueProcessing": {
+                "splitAt": "",
+                "trim": false
+            },
+            "methods": [
+                {
+                    "method": {
+                        "technology": "JAVA",
+                        "visibility": "PROTECTED",
+                        "modifiers": [],
+                        "className": "de.hybris.platform.servicelayer.internal.jalo.ServicelayerJob",
+                        "methodName": "performCronJob",
+                        "argumentTypes": [
+                            "de.hybris.platform.cronjob.jalo.CronJob"
+                        ],
+                        "returnType": "de.hybris.platform.cronjob.jalo.CronJob$CronJobResult"
+                    },
+                    "capture": "ARGUMENT",
+                    "argumentIndex": 1,
+                    "deepObjectAccess": ".toString()"
+                }
+            ]
+        }
+    ],
+    "normalization": "ORIGINAL",
+    "aggregation": "FIRST",
+    "confidential": false,
+    "skipPersonalDataMasking": true
+}

@@ -1,0 +1,33 @@
+{
+    "metadata": {
+        "clusterVersion": "1.150.0.20180628-152820",
+        "configurationVersions": [
+            0
+        ]
+    },
+    "id": "",
+    "name": "ySolrQuery1",
+    "enabled": true,
+    "rules": [
+        {
+            "id": "",
+            "enabled": true,
+            "fileName": "",
+            "className": "org.apache.solr.client.solrj.SolrClient",
+            "matcher": "EQUALS",
+            "methodRules": [
+                {
+                    "id": "",
+                    "methodName": "query",
+                    "argumentTypes": [
+                        "org.apache.solr.common.params.SolrParams"
+                    ],
+                    "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+                }
+            ],
+            "annotations": []
+        }
+    ],
+    "queueEntryPoint": false,
+    "processGroups": []
+}
