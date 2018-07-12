@@ -22,8 +22,8 @@ config_data_len= 0
 config_iteration = 0
 config_json_path = []
 confirmation_dict = {}
+constants_dict = {}
 dtTenantURL = 'https://'
-get_config_type = ''
 name_values = []
 parent_file_name = ''
 recheck_confirmCreation = {}
@@ -78,15 +78,7 @@ def validateGetResponse(apitoken, dtTenantURL, validateGetAPI):
     """ this function validates the respnse code of a specified get. Pass any GET api request, along with tenant and token, so long as the headers match.
         Future todo: make the headers an argument passed in when the function is invoked """
     validateGetURL = dtTenantURL + validateGetAPI
-    try:
-        validatgetresponse = requests.get(validateGetURL,headers=get_headers)
-    except Exception as e:
-        print('********************************************\n',
-              '******************* FAIL *******************\n',
-              '********************************************\n',
-              'AN EXCEPTION WAS CAUGHT. Please ensure the Tenant URL and validationAPI passed into this function are valid.\n',
-              'details of the exception are in the log file "{}" file in this directory'.format(logfile))
-        handleException(e)
+    validatgetresponse = requests.get(validateGetURL,headers=get_headers)
     # For known response codes, send a message. Otherwise send generic response code error in the else.
     if validatgetresponse.status_code == 200:
         logging.info(' Validation Check SUCCESSFUL')
@@ -175,7 +167,7 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath):
         config_iteration += 1
     return confirmation_dict
 
-def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint):
+def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, config_type):
     """ This function confirms the creation for all successful config posts in the function postConfig. First, it runs another GET against either the supplied
     list_customservices_api or list_requestattributes_api to gather the most up-to-date list names_list that exist. For all successful (status 201) postConfig items in confirmation_dict,
     this function checks to see if they exist in names_list. If they do, a success message is written to the log. If not, it tries to post again.  If the post does not receive a 201,
@@ -188,7 +180,7 @@ def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint):
         recheck_confirmCreation = {}
         sleep(10)
         config_url = dtTenantURL + APIEndPoint
-        name_values = getExistingConfigs(getExAPIEndPoint ,get_config_type)
+        name_values = getExistingConfigs(getExAPIEndPoint ,config_type)
         for key, value in created_configs.items():
             if key in name_values:
                 print('Successfully Confirmed {} was created'.format(key))
@@ -227,6 +219,25 @@ def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint):
 logfile = 'log/hybris_config_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + '.log'
 logging.basicConfig(filename=logfile,format='%(levelname)s:%(message)s',level=logging.INFO)
 
+# =========================================================
+# LOAD CONSTANTS file
+# =========================================================
+"""
+The file Constants.txt contains:
+    - the variable names and endpoints for the API calls used in this script
+    - two URIs for the tenant settings pages where the user is instructed to look to see their handiwork
+    - key valuse for reading modifying the name of a config in the config json file
+    This file should only be modified if any of these constants have changed.
+    The format for an entry is:
+        variablename : value
+    These will be split, whitespace will removed, and the values will be written to the dictionary constants_dict
+"""
+
+
+with open('Constants.txt') as constants_file:
+    for line in constants_file:
+        constant_key, constant_value = line.strip('\n').split(':', 1)
+        constants_dict[constant_key.strip()] = constant_value.lstrip()
 
 # =========================================================
 # GET TENANT URL AND API TOKEN
@@ -245,14 +256,8 @@ dtTenantURL += getdtTenantURL()
 # CONSTANTS
 # =========================================================
 
-list_customservices_api = '/api/config/v1/customServices/java?includeProcessGroupReferences=false'
-list_requestattributes_api = '/api/config/v1/requestAttributes'
-post_customservices_api = '/api/config/v1/customServices/java'
-post_requestattributes_api = '/api/config/v1/requestAttributes'
 get_headers = {'Accept':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
 post_headers = {'Content-Type':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
-custom_service_path = '/#settings/servicedetection/newcustomservices'
-request_attribute_path = '/#settings/servicedetection/requestattributes'
 today = datetime.date.today().strftime("%Y%m%d")
 
 # =========================================================
@@ -280,8 +285,8 @@ with open(logfile, 'a') as the_log_file:
     the_log_file.write('** Any time the name used in the custom service or request attribute already exists in your Dynatrace Tenant,\n')
     the_log_file.write('***** this script will append the date (like "_20180711") to the end of name in the JSON config file. \n')
     the_log_file.write('***** Further, when creating this possible duplicate, the script will set this new configuration to be inactive.\n')
-    the_log_file.write('***** Make sure to go to the custom service settings page: {}\n'.format(dtTenantURL + custom_service_path))
-    the_log_file.write('***** or the request attribute settings page: {}\n'.format(dtTenantURL + request_attribute_path))
+    the_log_file.write('***** Make sure to go to the custom service settings page: {}\n'.format(dtTenantURL + constants_dict['custom_service_path']))
+    the_log_file.write('***** or the request attribute settings page: {}\n'.format(dtTenantURL + constants_dict['request_attribute_path']))
     the_log_file.write('***** Determine if you want delete the new config, replace your pre-existing one, or merge the two.\n')
     the_log_file.write('\n')
     the_log_file.write('**********************************************************************\n')
@@ -293,7 +298,7 @@ with open(logfile, 'a') as the_log_file:
 # =========================================================
 
 print('Validating API access on the tenant')
-validateGetResponse(apitoken, dtTenantURL, list_customservices_api)
+validateGetResponse(apitoken, dtTenantURL, constants_dict['list_customservices_api'])
 print('---Validation successful')
 
 # =========================================================
@@ -309,19 +314,12 @@ parent_file_name = 'CustomServiceList.txt'
 
 config_json_path = gatherFileList(parent_file_name)
 
-
-#This is the KEY name to be used from the returning JSON file from function: getExistingConfigs.
-# for custom Services, it should be 'customServices'
-# for Request Attributes, it should be 'values'
-
-get_config_type = 'customServices'
-
 #Run a GET against the list custom services API to get a name list of existing custom services
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
 print('Get existing Custom Services')
-name_values = getExistingConfigs(list_customservices_api,get_config_type)
+name_values = getExistingConfigs(constants_dict['list_customservices_api'],constants_dict['custom_srvc_type'])
 print('---Get existing Custom Services was successful')
 
 
@@ -332,7 +330,7 @@ print('---Get existing Custom Services was successful')
 # Returns a list of services created with a 201 response for valdiation in a later step
 
 print('Attempting to create Custom Services')
-confirmation_dict = postConfigs(post_customservices_api, name_values, config_json_path)
+confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_json_path)
 print('---Create Custom Services complete')
 
 created_custom_services = confirmation_dict
@@ -343,14 +341,14 @@ created_custom_services = confirmation_dict
 
 print('Verifying creation of Custom Services')
 success = False
-success, recheck_confirmCreation = confirmCreation(post_customservices_api, created_custom_services, success, list_customservices_api)
+success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'])
 
 #For all customm services that had to be re-posted in the confirmation step just above, this next function call goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful. If there is some other problem,
 # this has the potential to create a serious loop.
 
 while success == False:
-    success, recheck_confirmCreation = confirmCreation(post_customservices_api, recheck_confirmCreation, success, list_customservices_api)
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'])
 print('---Custom Services Creation Verification Complete')
 
 
@@ -370,18 +368,12 @@ parent_file_name = 'RequestAttributeList.txt'
 config_json_path = gatherFileList(parent_file_name)
 
 
-#This is the KEY name to be used from the returning JSON file from function: getExistingConfigs.
-# for custom Services, it should be 'customServices'
-# for Request Attributes, it should be 'values'
-
-get_config_type = 'values'
-
 #Run a GET against the list custom services API to get a name list of existing custom services
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
 print('Get existing Request Attributes')
-name_values = getExistingConfigs(list_requestattributes_api, get_config_type)
+name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
 print('---Get existing Request Attributes was successful')
 
 #Iterate through the JSON files in 'RequestAttributeList.json' and do the following:
@@ -391,7 +383,7 @@ print('---Get existing Request Attributes was successful')
 # Returns a list of services created with a 201 response for valdiation in a later step
 
 print('Attempting to create Request Attributes')
-confirmation_dict = postConfigs(post_requestattributes_api, name_values, config_json_path)
+confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_json_path)
 print('---Create Request Attributes Services complete')
 
 created_request_attributes = confirmation_dict
@@ -402,13 +394,13 @@ created_request_attributes = confirmation_dict
 
 print('Verifying creation of Request Attributes')
 success = False
-success, recheck_confirmCreation = confirmCreation(post_requestattributes_api, created_request_attributes, success, list_requestattributes_api)
+success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
 
 #For all request attributes that had to be re-posted in the confirmation step just above, this next function goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful.
 
 while success == False:
-    success, recheck_confirmCreation = confirmCreation(post_requestattributes_api, recheck_confirmCreation, success, list_requestattributes_api)
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
 print('---Request Attributes Creation Verification Complete')
 
 # =========================================================
