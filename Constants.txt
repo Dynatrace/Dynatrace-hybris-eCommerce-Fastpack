@@ -1,0 +1,10 @@
+list_customservices_api : /api/config/v1/customServices/java?includeProcessGroupReferences=false
+list_requestattributes_api : /api/config/v1/requestAttributes
+post_customservices_api : /api/config/v1/customServices/java
+post_requestattributes_api : /api/config/v1/requestAttributes
+custom_service_path : /#settings/servicedetection/newcustomservices
+request_attribute_path : /#settings/servicedetection/requestattributes
+custom_srvc_type : customServices
+request_attr_type : values
+get_headers : Accept : application/json; charset=utf-8, Authorization : Api-Token
+post_headers : Content-Type : application/json; charset=utf-8 ,  Authorization : Api-Token
