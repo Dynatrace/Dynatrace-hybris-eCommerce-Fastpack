@@ -3,6 +3,10 @@ This is a Python 3 based script designed to import Custom Service and Request At
 
 This script was designed to be re-usable for deploying any Custom Services and Request Attributes, not just Hybris. At a high level: you provide the inputs and the script posts them to the target tenant. 
 
+__It is not yet possible to create the following items with the Configuration API. Please refer to the videos on Dynatrace APMU for instructions on how to create them:__
+* Hybris JMX Metrics
+* Request Naming Rules based on Request Attributes
+
 ## Pre-requisits 
 * [Python3](https://www.python.org/downloads/)
 * A local copy of this repository
