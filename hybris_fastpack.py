@@ -242,10 +242,6 @@ with open('Constants.txt') as constants_file:
 # =========================================================
 # GET TENANT URL AND API TOKEN
 # =========================================================
-#  Testing data, do not leave in
-#apitoken = 'uIbCVh2cRdWcnpN0hY_nN'
-#dtTenantURL = 'https://aby71138.dev.dynatracelabs.com'
-
 
 # get user data for making API calls
 # Uncomment these when ready to run for real
