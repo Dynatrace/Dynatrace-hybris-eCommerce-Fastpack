@@ -16,10 +16,9 @@ This script was designed to be re-usable for deploying any Custom Services and R
   * sys
 * A Dynatrace Tenant
 * An API Token from the Dynatrace Tenant with the following permissions:
-  * 
-  * 
-  * 
-
+  * Read Configuration
+  * Write Configuration
+  * Capture request data
 
 ## How to use the fastpack
 There are 3 parent files in the same directory as the python script and 3 subdirectories that you may interact with. However, if you are using this repository to deploy the Hybris configurations, all you have to do is run the python script
@@ -45,3 +44,34 @@ The Constants are:
 * API POST endpoints for creating Custom Services and Request Attributes
 * URIs in the dynatrace tenant for the settings pages for Custom Services and Request Attributes
 * the JSON keys for identifying the names of existing Custom Services and Request Attributes
+
+## Running the Script
+Once all of your files are in order, it's as simple as navigating to repository directory and running:
+
+     `python dynatrace_hybris_ecommerce_fastpack.py`
+
+Please take into account that your python command may vary. Some may have to us python3, others py. Basically, use whatever python command will invoke your python 3 CLI.
+
+## How the script operates
+This section describes how the script operates. 
+
+* The log file is initialized
+* The Constants file gets read and processed
+* The user is required to input their API Token. The token is checked to make sure it's 21 characters long. If not, and the user does not correct it, the script exits.
+* The user is required to input their tenant name. Since tenant names, especially if managed, can be almost anything, all we're doing here is verifying that the input is not null. 
+* Headers are created
+* A GET is run against custom services, checking for the status code. This is to determine if the API Token and Tenant are Valid.  If an HTTP 200 is not returned, the script exits with a specific message both in the terminal as well as in the log file
+* Custom Services are created:
+  * The CustomServicesList.txt file is parsed and sent to the gatherFilesList function. 
+  * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created
+  * The getExistingConfigs function is invoked and gathers a list of existing custom services.
+  * The postConfigs function is called to create the custom services, looping through all of the loaded JSON files.
+     * First, we check the name of the new custom service against the list of existing services. a duplicate cannot be created, so if a duplicate is found, we append today's date to the end of the name to make it unique. We do this because even though the names may be the same, the configuration may be different. We want to give the user the option as to whether or not they want to stay with their original config, use the new one, or, if there are difference, merge the differences.
+     * Once the name is checked and possibly modified, the custom service is created. If the name has not been modified, the custom service is created as 'active'. If it's a duplicate and the name was modified, it is created but set to 'inactive' in order to avoid any conflicts.  
+     * With the POST of the config, the status code is checked. If it's a 201 status code - success, the name of the config and the file are written to a library so they can be verified in the next step. If the status is not 201, the creation of that custom service is aborted and the function loops to the next.
+  * Once all of the custom services are created, the confirmCreation function is invoked. This takes the list of custom service names (the modified ones if they had to get modified) and the JSON file for all custom services that returned a 201 success during creation. The function runs another GET against the list custom services endpoint, capturing the names of the existing custom services which should now contain the new services. The names returned in by postConfigs are checked against the names from the new GET. If the name exists, the function writes a success message to the console and the log. If the name does not exist, the custom service is posted and if there's a 201 result, the name and JSON file get written to another confirmation dictionary for use in the next step. If the result is not a 201, that custom service is aborted.
+  * In the final step, we loop through the confimation step until all created services exist. There is a small chance for an endless loop here if something very strange is wrong, but remember, only services that get a 201 status are re-checked. We will not be in a situation where a 4xx or 5xx result will result in an endless loop, as those ones are not retried.
+     * these confirmation steps were created becuase of a known issue where in certain circumstances, a 201 result will be returned, but the configuration will not persist. Once this issue is resolved, we can decided to either keep the confirmation steps or get rid of them. I'm leaning towards keeping them.  
+* The entire process above is repeated for the Request Atttrubutes. All of the same functions are used.
+  * When the script is complete, the terminal prompts the user to check the log file for results as well as instructions to verify the results in the tenant and make choices for identified, renamed duplicated. 
+
