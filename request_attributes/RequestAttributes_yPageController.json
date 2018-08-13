@@ -1,50 +1,50 @@
 {
-    "metadata": {
-        "clusterVersion": "1.151.0.20180711-153927",
-        "configurationVersions": [
-            0
-        ]
-    },
-    "id": "",
-    "name": "yPageController_1",
-    "enabled": true,
-    "dataType": "STRING",
-    "dataSources": [
-        {
-            "enabled": true,
-            "source": "METHOD_PARAM",
-            "valueProcessing": {
-                "splitAt": "",
-                "trim": false,
-                "extractSubstring": {
-                    "position": "BEFORE",
-                    "delimiter": "Controller"
-                }
-            },
-            "methods": [
-                {
-                    "method": {
-                        "technology": "JAVA",
-                        "visibility": "PUBLIC",
-                        "modifiers": [],
-                        "className": "de.hybris.platform.acceleratorstorefrontcommons.controllers.AbstractController",
-                        "methodName": "addRequestToModel",
-                        "argumentTypes": [
-                            "javax.servlet.http.HttpServletRequest"
-                        ],
-                        "returnType": "javax.servlet.http.HttpServletRequest"
-                    },
-                    "capture": "THIS",
-                    "deepObjectAccess": ".getClass().getSimpleName()"
-                }
-            ],
-            "scope": {
-                "tagOfProcessGroup": "hybris"
-            }
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "yPageController",
+  "enabled": true,
+  "dataType": "STRING",
+  "dataSources": [
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false,
+        "extractSubstring": {
+          "position": "BEFORE",
+          "delimiter": "Controller"
         }
-    ],
-    "normalization": "ORIGINAL",
-    "aggregation": "FIRST",
-    "confidential": false,
-    "skipPersonalDataMasking": true
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "de.hybris.platform.acceleratorstorefrontcommons.controllers.AbstractController",
+            "methodName": "addRequestToModel",
+            "argumentTypes": [
+              "javax.servlet.http.HttpServletRequest"
+            ],
+            "returnType": "javax.servlet.http.HttpServletRequest"
+          },
+          "capture": "THIS",
+          "deepObjectAccess": ".getClass().getSimpleName()"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    }
+  ],
+  "normalization": "ORIGINAL",
+  "aggregation": "FIRST",
+  "confidential": false,
+  "skipPersonalDataMasking": true
 }

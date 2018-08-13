@@ -6,7 +6,7 @@
     ]
   },
   "id": "",
-  "name": "yCronJob_Name",
+  "name": "yBusiness ProcessEngine Status",
   "enabled": true,
   "dataType": "STRING",
   "dataSources": [
@@ -23,16 +23,15 @@
             "technology": "JAVA",
             "visibility": "PROTECTED",
             "modifiers": [],
-            "className": "de.hybris.platform.servicelayer.internal.jalo.ServicelayerJob",
-            "methodName": "performCronJob",
+            "className": "de.hybris.platform.processengine.process.ProcessengineTaskRunner",
+            "methodName": "runProcessTask",
             "argumentTypes": [
-              "de.hybris.platform.cronjob.jalo.CronJob"
+              "de.hybris.platform.processengine.model.ProcessTaskModel"
             ],
-            "returnType": "de.hybris.platform.cronjob.jalo.CronJob$CronJobResult"
+            "returnType": "java.lang.String"
           },
           "capture": "ARGUMENT",
-          "argumentIndex": 1,
-          "deepObjectAccess": ".toString()"
+          "argumentIndex": 0
         }
       ],
       "scope": {

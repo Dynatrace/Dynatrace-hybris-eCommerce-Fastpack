@@ -6,7 +6,7 @@
     ]
   },
   "id": "",
-  "name": "yCronJob_Name",
+  "name": "yCronJobResult",
   "enabled": true,
   "dataType": "STRING",
   "dataSources": [
@@ -15,7 +15,11 @@
       "source": "METHOD_PARAM",
       "valueProcessing": {
         "splitAt": "",
-        "trim": false
+        "trim": false,
+        "extractSubstring": {
+          "position": "AFTER",
+          "delimiter": "result:"
+        }
       },
       "methods": [
         {
@@ -31,7 +35,7 @@
             "returnType": "de.hybris.platform.cronjob.jalo.CronJob$CronJobResult"
           },
           "capture": "ARGUMENT",
-          "argumentIndex": 1,
+          "argumentIndex": 0,
           "deepObjectAccess": ".toString()"
         }
       ],
@@ -43,5 +47,5 @@
   "normalization": "ORIGINAL",
   "aggregation": "FIRST",
   "confidential": false,
-  "skipPersonalDataMasking": true
+  "skipPersonalDataMasking": false
 }

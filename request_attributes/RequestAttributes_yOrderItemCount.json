@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "yOrderItemCount",
+  "enabled": true,
+  "dataType": "INTEGER",
+  "dataSources": [
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "de.hybris.platform.commercefacades.order.impl.DefaultCheckoutFacade",
+            "methodName": "placeOrder",
+            "argumentTypes": [],
+            "returnType": "de.hybris.platform.commercefacades.order.data.OrderData"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getTotalUnitCount()"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    },
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PROTECTED",
+            "modifiers": [],
+            "className": "de.hybris.platform.acceleratorfacades.order.impl.DefaultAcceleratorCheckoutFacade",
+            "methodName": "placeOrder",
+            "argumentTypes": [
+              "de.hybris.platform.core.model.order.CartModel"
+            ],
+            "returnType": "de.hybris.platform.core.model.order.OrderModel"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getEntries().size()"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    }
+  ],
+  "normalization": "ORIGINAL",
+  "aggregation": "MAXIMUM",
+  "confidential": false,
+  "skipPersonalDataMasking": false
+}

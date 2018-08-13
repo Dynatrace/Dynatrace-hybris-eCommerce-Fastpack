@@ -1,0 +1,87 @@
+**********************************************************************
+ 
+This is the log file for the Dynatrace Hybris eCommerce Configuration.
+In this file you will find several important things. 
+** The HTTP Status Code of every Post
+***** Any POST that does not result in a 201 status code failed and will not be retried.
+***** You will have to debug why these failed. To try them again, remove the successful POSTs
+***** from the parent file (CustomServiceList.txt or RequsetAttributes.txt) and re-run this script.
+
+** Other errors or exceptions will be listed.
+
+IMPORTANT!
+** You want to look for the lines containing text like:
+***** ---yBusiness Process Task1 Creation is successfully confirmed
+***** This indicates all of the succussful posts. Check these against the
+***** lists in your parent file to determine if all were created. 
+
+** Any time the name used in the custom service or request attribute already exists in your Dynatrace Tenant,
+***** this script will append the date (like "_20180711") to the end of name in the JSON config file. 
+***** Further, when creating this possible duplicate, the script will set this new configuration to be inactive.
+***** Make sure to go to the custom service settings page: https://bem07827.live.dynatrace.com/#settings/servicedetection/newcustomservices
+***** or the request attribute settings page: https://bem07827.live.dynatrace.com/#settings/servicedetection/requestattributes
+***** Determine if you want delete the new config, replace your pre-existing one, or merge the two.
+
+**********************************************************************
+**********************************************************************
+INFO: Validation Check SUCCESSFUL
+INFO: yCronJobs found in name_values. Creating alternate name: yCronJobs_20180813
+INFO: postConfigs status code for yCronJobs_20180813 = 201
+INFO: yBusiness Process Task found in name_values. Creating alternate name: yBusiness Process Task_20180813
+INFO: postConfigs status code for yBusiness Process Task_20180813 = 201
+INFO: ySolrQuery found in name_values. Creating alternate name: ySolrQuery_20180813
+INFO: postConfigs status code for ySolrQuery_20180813 = 201
+INFO: ==================================================================
+||------  yCronJobs_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yBusiness Process Task_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  ySolrQuery_20180813 Creation is successfully confirmed
+========================================================================
+INFO: yBusiness ProcessEngine Name found in name_values. Creating alternate name: yBusiness ProcessEngine Name_20180813
+INFO: postConfigs status code for yBusiness ProcessEngine Name_20180813 = 201
+INFO: yBusiness ProcessEngine Status found in name_values. Creating alternate name: yBusiness ProcessEngine Status_20180813
+INFO: postConfigs status code for yBusiness ProcessEngine Status_20180813 = 201
+INFO: yCronJob_Name found in name_values. Creating alternate name: yCronJob_Name_20180813
+INFO: postConfigs status code for yCronJob_Name_20180813 = 201
+INFO: yCronJobResult found in name_values. Creating alternate name: yCronJobResult_20180813
+INFO: postConfigs status code for yCronJobResult_20180813 = 201
+INFO: yCurrency found in name_values. Creating alternate name: yCurrency_20180813
+INFO: postConfigs status code for yCurrency_20180813 = 201
+INFO: yNumber of Search Results found in name_values. Creating alternate name: yNumber of Search Results_20180813
+INFO: postConfigs status code for yNumber of Search Results_20180813 = 201
+INFO: yOrderItemCount found in name_values. Creating alternate name: yOrderItemCount_20180813
+INFO: postConfigs status code for yOrderItemCount_20180813 = 201
+INFO: yOrderValue found in name_values. Creating alternate name: yOrderValue_20180813
+INFO: postConfigs status code for yOrderValue_20180813 = 201
+INFO: yPageController found in name_values. Creating alternate name: yPageController_20180813
+INFO: postConfigs status code for yPageController_20180813 = 201
+INFO: ==================================================================
+||------  yBusiness ProcessEngine Name_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yBusiness ProcessEngine Status_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yCronJob_Name_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yCronJobResult_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yCurrency_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yNumber of Search Results_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yOrderItemCount_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yOrderValue_20180813 Creation is successfully confirmed
+========================================================================
+INFO: ==================================================================
+||------  yPageController_20180813 Creation is successfully confirmed
+========================================================================

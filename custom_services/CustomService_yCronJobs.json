@@ -6,7 +6,7 @@
         ]
     },
     "id": "",
-    "name": "yCronJobs1",
+    "name": "yCronJobs",
     "enabled": true,
     "rules": [
         {

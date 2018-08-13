@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "yNumber of Search Results",
+  "enabled": true,
+  "dataType": "INTEGER",
+  "dataSources": [
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "org.apache.solr.client.solrj.SolrClient",
+            "methodName": "query",
+            "argumentTypes": [
+              "org.apache.solr.common.params.SolrParams"
+            ],
+            "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getResults().getNumFound()"
+        },
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "org.apache.solr.client.solrj.SolrClient",
+            "methodName": "query",
+            "argumentTypes": [
+              "java.lang.String",
+              "org.apache.solr.common.params.SolrParams",
+              "org.apache.solr.client.solrj.SolrRequest$METHOD"
+            ],
+            "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getResults().getNumFound()"
+        },
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "org.apache.solr.client.solrj.SolrClient",
+            "methodName": "query",
+            "argumentTypes": [
+              "java.lang.String",
+              "org.apache.solr.common.params.SolrParams"
+            ],
+            "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getResults().getNumFound()"
+        },
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "org.apache.solr.client.solrj.SolrClient",
+            "methodName": "query",
+            "argumentTypes": [
+              "org.apache.solr.common.params.SolrParams",
+              "org.apache.solr.client.solrj.SolrRequest$METHOD"
+            ],
+            "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getResults().getNumFound()"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    }
+  ],
+  "normalization": "ORIGINAL",
+  "aggregation": "MAXIMUM",
+  "confidential": false,
+  "skipPersonalDataMasking": true
+}

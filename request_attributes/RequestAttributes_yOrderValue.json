@@ -6,9 +6,9 @@
     ]
   },
   "id": "",
-  "name": "yCronJob_Name",
+  "name": "yOrderValue",
   "enabled": true,
-  "dataType": "STRING",
+  "dataType": "DOUBLE",
   "dataSources": [
     {
       "enabled": true,
@@ -23,16 +23,17 @@
             "technology": "JAVA",
             "visibility": "PROTECTED",
             "modifiers": [],
-            "className": "de.hybris.platform.servicelayer.internal.jalo.ServicelayerJob",
-            "methodName": "performCronJob",
+            "className": "de.hybris.platform.commercefacades.order.impl.DefaultCheckoutFacade",
+            "methodName": "afterPlaceOrder",
             "argumentTypes": [
-              "de.hybris.platform.cronjob.jalo.CronJob"
+              "de.hybris.platform.core.model.order.CartModel",
+              "de.hybris.platform.core.model.order.OrderModel"
             ],
-            "returnType": "de.hybris.platform.cronjob.jalo.CronJob$CronJobResult"
+            "returnType": "void"
           },
           "capture": "ARGUMENT",
           "argumentIndex": 1,
-          "deepObjectAccess": ".toString()"
+          "deepObjectAccess": ".getTotalPrice()"
         }
       ],
       "scope": {
@@ -41,7 +42,7 @@
     }
   ],
   "normalization": "ORIGINAL",
-  "aggregation": "FIRST",
+  "aggregation": "MAXIMUM",
   "confidential": false,
-  "skipPersonalDataMasking": true
+  "skipPersonalDataMasking": false
 }

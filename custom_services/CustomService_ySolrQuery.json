@@ -1,33 +1,61 @@
 {
-    "metadata": {
-        "clusterVersion": "1.150.0.20180628-152820",
-        "configurationVersions": [
-            0
-        ]
-    },
-    "id": "",
-    "name": "ySolrQuery1",
-    "enabled": true,
-    "rules": [
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "ySolrQuery",
+  "enabled": true,
+  "rules": [
+    {
+      "id": "",
+      "enabled": true,
+      "fileName": "",
+      "className": "org.apache.solr.client.solrj.SolrClient",
+      "matcher": "EQUALS",
+      "methodRules": [
         {
-            "id": "",
-            "enabled": true,
-            "fileName": "",
-            "className": "org.apache.solr.client.solrj.SolrClient",
-            "matcher": "EQUALS",
-            "methodRules": [
-                {
-                    "id": "",
-                    "methodName": "query",
-                    "argumentTypes": [
-                        "org.apache.solr.common.params.SolrParams"
-                    ],
-                    "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
-                }
-            ],
-            "annotations": []
+          "id": "",
+          "methodName": "query",
+          "argumentTypes": [
+            "org.apache.solr.common.params.SolrParams"
+          ],
+          "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+        },
+        {
+          "id": "",
+          "methodName": "query",
+          "argumentTypes": [
+            "java.lang.String",
+            "org.apache.solr.common.params.SolrParams",
+            "org.apache.solr.client.solrj.SolrRequest$METHOD"
+          ],
+          "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+        },
+        {
+          "id": "",
+          "methodName": "query",
+          "argumentTypes": [
+            "java.lang.String",
+            "org.apache.solr.common.params.SolrParams"
+          ],
+          "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
+        },
+        {
+          "id": "",
+          "methodName": "query",
+          "argumentTypes": [
+            "org.apache.solr.common.params.SolrParams",
+            "org.apache.solr.client.solrj.SolrRequest$METHOD"
+          ],
+          "returnType": "org.apache.solr.client.solrj.response.QueryResponse"
         }
-    ],
-    "queueEntryPoint": false,
-    "processGroups": []
+      ],
+      "annotations": []
+    }
+  ],
+  "queueEntryPoint": false,
+  "processGroups": []
 }
