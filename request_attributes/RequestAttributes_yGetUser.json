@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "yGetUser",
+  "enabled": true,
+  "dataType": "STRING",
+  "dataSources": [
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PUBLIC",
+            "modifiers": [],
+            "className": "de.hybris.platform.core.model.order.AbstractOrderModel",
+            "methodName": "getUser",
+            "argumentTypes": [],
+            "returnType": "de.hybris.platform.core.model.user.UserModel"
+          },
+          "capture": "ARGUMENT",
+          "argumentIndex": 0,
+          "deepObjectAccess": ".getContactEmail()"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    }
+  ],
+  "normalization": "ORIGINAL",
+  "aggregation": "FIRST",
+  "confidential": false,
+  "skipPersonalDataMasking": false
+}

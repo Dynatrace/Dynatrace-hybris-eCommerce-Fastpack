@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "clusterVersion": "1.150.93.20180727-120510",
+    "configurationVersions": [
+      0
+    ]
+  },
+  "id": "",
+  "name": "yPlaceOrder",
+  "enabled": true,
+  "dataType": "INTEGER",
+  "dataSources": [
+    {
+      "enabled": true,
+      "source": "METHOD_PARAM",
+      "valueProcessing": {
+        "splitAt": "",
+        "trim": false
+      },
+      "methods": [
+        {
+          "method": {
+            "technology": "JAVA",
+            "visibility": "PROTECTED",
+            "modifiers": [],
+            "className": "de.hybris.platform.commercefacades.order.impl.DefaultCheckoutFacade",
+            "methodName": "afterPlaceOrder",
+            "argumentTypes": [
+              "de.hybris.platform.core.model.order.CartModel",
+              "de.hybris.platform.core.model.order.OrderModel"
+            ],
+            "returnType": "void"
+          },
+          "capture": "OCCURRENCES"
+        }
+      ],
+      "scope": {
+        "serviceTechnology": "SAP_HYBRIS"
+      }
+    }
+  ],
+  "normalization": "ORIGINAL",
+  "aggregation": "COUNT_VALUES",
+  "confidential": false,
+  "skipPersonalDataMasking": true
+}
