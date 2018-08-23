@@ -1,19 +1,19 @@
 # Dynatrace-hybris-eCommerce-Fastpack
-This is a Python 3 based script designed to import Custom Service and Request Attribute definitions and deploy them to your Dynatrace Tenant through the Configuration API. Specifically, the Custom Services and Request Attributes in this repo are for monitoring the Hybris eCommerce environment. 
+This is a Python 3 based script designed to import Custom Service and Request Attribute definitions and deploy them to your Dynatrace Tenant through the Configuration API. Specifically, the Custom Services and Request Attributes in this repo are for monitoring the Hybris eCommerce environment.
 
-This script was designed to be re-usable for deploying any Custom Services and Request Attributes, not just Hybris. At a high level: you provide the inputs and the script posts them to the target tenant. 
+This script was designed to be re-usable for deploying any Custom Services and Request Attributes, not just Hybris. At a high level: you provide the inputs and the script posts them to the target tenant.
 
 __It is not yet possible to create the following items with the Configuration API. Please refer to the videos on Dynatrace APMU for instructions on how to create them:__
 * Hybris JMX Metrics
 * Request Naming Rules based on Request Attributes
 
-## Pre-requisits 
+## Pre-requisits
 * [Python3](https://www.python.org/downloads/)
 * A local copy of this repository
 * The following standard python modules:
   * datetime
   * json
-  * logging 
+  * logging
   * requests
   * datetime
   * time
@@ -25,29 +25,32 @@ __It is not yet possible to create the following items with the Configuration AP
   * Capture request data
 
 ## How to use the fastpack
-There are 3 parent files in the same directory as the python script and 3 subdirectories that you may interact with. However, if you are using this repository to deploy the Hybris configurations, all you have to do is run the python script
+There are 4 parent files in the same directory as the python script and 3 subdirectories that you may interact with. However, if you are using this repository to deploy the Hybris configurations, all you have to do is run the python script
 ### Parent Files:
 * CustomServiceList.txt
 * RequestAttributesList.txt
+* RequestNamingList.txt
 * Constants.txt
 ### Subfolders
 * custom_services
 * request_attributes
+* request_naming
 * log
 
-A custom service/request attribute (CS/RA) is created by a data set in JSON format. Each CS/RA requires its own json document. These are stored in the subfolders 'custom_services' and 'request_attributes'. For every CS/RA you want to create, store it in a new json document in the appropriate subfolder. 
+A custom service/request attribute/request naming rule (CS/RA/RN) is created by a data set in JSON format. Each CS/RA/RN requires its own json document. These are stored in the subfolders 'custom_services', 'request_attributes', and 'request_naming'. For every CS/RA/RN you want to create, store it in a new json document in the appropriate subfolder.
 
-The files CustomServiceList.txt & RequestAttributesList.txt are simply text files containing a line for the path/name of each json file for the CS/RA to be created. For whatever CS/RA json files you create, put the relative path to their location on a new line in the respective file. 
+The files CustomServiceList.txt, RequestAttributesList.txt, and RequestNamingList.txt are simply text files containing a line for the path/name of each json file for the CS/RA/RN to be created. For whatever CS/RA/RN json files you create, put the relative path to their location on a new line in the respective file.
 
-The log folder is simply the location where the log file will be written. Every time you run the script, a log file will be created with outputs and instructions. 
+The log folder is simply the location where the log file will be written. Every time you run the script, a log file will be created with outputs and instructions.
 
-The Constants.txt file has a list of constants that get read into the script. Though these are considered constants, I've placed them outside of the script becaus overtime, the values may change. It is not expected that they do, but as you can see in the list of the constants below, if anything changes in the Configuration API, you can modify the data in the file instead of modifying the script itself. 
+The Constants.txt file has a list of constants that get read into the script. Though these are considered constants, I've placed them outside of the script becaus overtime, the values may change. It is not expected that they do, but as you can see in the list of the constants below, if anything changes in the Configuration API, you can modify the data in the file instead of modifying the script itself.
 
 The Constants are:
-* API GET endpoints for retrieving the existing Custom Services and Request Attributes
-* API POST endpoints for creating Custom Services and Request Attributes
-* URIs in the dynatrace tenant for the settings pages for Custom Services and Request Attributes
-* the JSON keys for identifying the names of existing Custom Services and Request Attributes
+* API GET endpoints for retrieving the existing Custom Services, Request Attributes, and Request Naming Rules
+* API POST endpoints for creating Custom Services, Request Attributes, and Request Naming Rules
+* URIs in the dynatrace tenant for the settings pages for Custom Services, Request Attributes, and Request Naming Rules
+* the JSON keys for identifying the names of existing Custom Services, Request Attributes, and Request Naming Rules
+* the JSON key value for identifying the names of existing Custom Services, Request Attributes, and Request Naming Rules
 
 ## Running the Script
 Once all of your files are in order, it's as simple as navigating to repository directory and running:
@@ -58,16 +61,16 @@ python dynatrace_hybris_ecommerce_fastpack.py
 Please take into account that your python command may vary. Some may have to us python3, others py. Basically, use whatever python command will invoke your python 3 CLI.
 
 ## How the script operates
-This section describes how the script operates. 
+This section describes how the script operates.
 
 * The log file is initialized
 * The Constants file gets read and processed
 * The user is required to input their API Token. The token is checked to make sure it's 21 characters long. If not, and the user does not correct it, the script exits.
-* The user is required to input their tenant name. Since tenant names, especially if managed, can be almost anything, all we're doing here is verifying that the input is not null. 
+* The user is required to input their tenant name. Since tenant names, especially if managed, can be almost anything, all we're doing here is verifying that the input is not null.
 * Headers are created
 * A GET is run against custom services, checking for the status code. This is to determine if the API Token and Tenant are Valid.  If an HTTP 200 is not returned, the script exits with a specific message both in the terminal as well as in the log file
 * Custom Services are created:
-  * The CustomServicesList.txt file is parsed and sent to the gatherFilesList function. 
+  * The CustomServicesList.txt file is parsed and sent to the gatherFilesList function.
   * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created
   * The getExistingConfigs function is invoked and gathers a list of existing custom services.
   * The postConfigs function is called to create the custom services, looping through all of the loaded JSON files.
@@ -78,5 +81,5 @@ This section describes how the script operates.
   * In the final step, we loop through the confimation step until all created services exist. There is a small chance for an endless loop here if something very strange is wrong, but remember, only services that get a 201 status are re-checked. We will not be in a situation where a 4xx or 5xx result will result in an endless loop, as those ones are not retried.
      * these confirmation steps were created becuase of a known issue where in certain circumstances, a 201 result will be returned, but the configuration will not persist. Once this issue is resolved, we can decided to either keep the confirmation steps or get rid of them. I'm leaning towards keeping them.  
 * The entire process above is repeated for the Request Atttrubutes. All of the same functions are used.
-  * When the script is complete, the terminal prompts the user to check the log file for results as well as instructions to verify the results in the tenant and make choices for identified, renamed duplicated. 
-
+* The entire process above is repeated for the Request Naming Rules. All of the same functions are used.
+* When the script is complete, the terminal prompts the user to check the log file for results as well as instructions to verify the results in the tenant and make choices for identified, renamed duplicated. 
