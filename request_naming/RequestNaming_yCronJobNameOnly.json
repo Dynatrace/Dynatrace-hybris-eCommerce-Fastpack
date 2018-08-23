@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "clusterVersion": "",
+    "configurationVersions": [
+    ]
+  },
+  "id": "",
+  "enabled": true,
+  "namingPattern": "{CronJobNameOnly}",
+  "conditions": [
+    {
+      "attribute": "SERVICE_REQUEST_ATTRIBUTE",
+      "comparisonInfo": {
+        "type": "STRING_REQUEST_ATTRIBUTE",
+        "requestAttribute": "yCronJobName",
+        "comparison": "EXISTS",
+        "value": true,
+        "negate": false
+      }
+    }
+  ],
+  "extractions": [
+    {
+      "name": "CronJobNameOnly",
+      "attribute": "SERVICE_REQUEST_ATTRIBUTE",
+      "kind": "BEFORE_DELIMITER",
+      "delimiterOrRegex": "(",
+      "requestAttribute": "yCronJobName",
+      "normalization": "ORIGINAL"
+    }
+  ],
+  "skipPersonalDataMasking": true,
+  "serviceType": "GENERIC"
+}

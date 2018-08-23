@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "clusterVersion": "",
+    "configurationVersions": [
+    ]
+  },
+  "id": "",
+  "enabled": true,
+  "namingPattern": "yPlace Order",
+  "conditions": [
+    {
+      "attribute": "SERVICE_REQUEST_ATTRIBUTE",
+      "comparisonInfo": {
+        "type": "NUMBER_REQUEST_ATTRIBUTE",
+        "requestAttribute": "yPlaceOrder",
+        "comparison": "GREATER_THAN_OR_EQUAL",
+        "value": 1,
+        "negate": false
+      }
+    }
+  ],
+  "extractions": [
+  ],
+  "skipPersonalDataMasking": true,
+  "serviceType": "GENERIC"
+}

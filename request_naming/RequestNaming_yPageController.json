@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "clusterVersion": "",
+    "configurationVersions": [
+    ]
+  },
+  "id": "",
+  "enabled": true,
+  "namingPattern": "{RequestAttribute:yPageController}",
+  "conditions": [
+    {
+      "attribute": "SERVICE_REQUEST_ATTRIBUTE",
+      "comparisonInfo": {
+        "type": "STRING_REQUEST_ATTRIBUTE",
+        "requestAttribute": "yPageController",
+        "comparison": "EXISTS",
+        "value": true,
+        "negate": false
+      }
+    }
+  ],
+  "extractions": [
+  ],
+  "skipPersonalDataMasking": true,
+  "serviceType": "GENERIC"
+}

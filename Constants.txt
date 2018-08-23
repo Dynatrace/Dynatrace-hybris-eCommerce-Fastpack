@@ -1,8 +1,14 @@
 list_customservices_api : /api/config/v1/customServices/java?includeProcessGroupReferences=false
 list_requestattributes_api : /api/config/v1/requestAttributes
+list_requestnamingrules_api : /api/config/v1/requestNaming
 post_customservices_api : /api/config/v1/customServices/java
 post_requestattributes_api : /api/config/v1/requestAttributes
+post_requestnamingrules_api : /api/config/v1/requestNaming
 custom_service_path : /#settings/servicedetection/newcustomservices
 request_attribute_path : /#settings/servicedetection/requestattributes
 custom_srvc_type : customServices
 request_attr_type : values
+request_name_type : requestNamings
+nameKey_custom_svc : name
+nameKey_request_attr : name
+nameKey_request_name : namingPattern

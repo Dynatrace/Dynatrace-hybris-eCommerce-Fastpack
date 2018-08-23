@@ -120,7 +120,7 @@ def gatherFileList(ParentFile):
         handleException(e)
     return config_json_path
 
-def getExistingConfigs(ConfigAPIEndpoint, getConfigType):
+def getExistingConfigs(ConfigAPIEndpoint, getConfigType, NameKey):
     """ This function runs a GET against the supplied API EndPoint, either List Custom Services or List Request Attributes, and retrieves a list
     of existing configuration names, storing them in the name_values list. This list is used in functions postConfigs and confirmCreation.
     The purpose is to be able to check for the existence a configuraion that already has the same name. """
@@ -128,10 +128,10 @@ def getExistingConfigs(ConfigAPIEndpoint, getConfigType):
     get_existing_configs_url = dtTenantURL + ConfigAPIEndpoint
     get_configs = requests.get(get_existing_configs_url,headers=get_headers).json()
     for name_key in get_configs[getConfigType]:
-        name_values.append(name_key['name'])
+        name_values.append(name_key[NameKey])
     return name_values
 
-def postConfigs(APIEndPoint, NameValues, ConfigJsonPath):
+def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
     """ This Function takes the list of JSON files and iterates posting through them. First, it checks the name against name_values (see  function getExistingConfigs).
     If the config name already exists, the new name gets modified by adding today's date to the end. Additionally, for these duplicates, the enable flag is set to False.
     The user should check these duplicates and determine if they want to replace the exisiting one, delete the new one, or merge the two.
@@ -149,25 +149,26 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath):
             print('Function postConfigs: could not open the file {}'.format(ConfigJsonPath[config_iteration]))
             logging.error(' Function postConfigs: could not open the file %s', ConfigJsonPath[config_iteration])
             handleException(e)
-        if loaded_JSON_file['name'] in NameValues:
-            unique_name = loaded_JSON_file['name'] + '_' + today
-            logging.info(' %s found in name_values. Creating alternate name: %s', loaded_JSON_file['name'], unique_name)
+        if loaded_JSON_file[NameKey] in NameValues:
+            unique_name = loaded_JSON_file[NameKey] + '_' + today
+            logging.info(' %s found in name_values. Creating alternate name: %s', loaded_JSON_file[NameKey], unique_name)
             # Since the config already exists with the same name, append today's date to the name to create a new version
-            loaded_JSON_file['name'] = unique_name
+            loaded_JSON_file[NameKey] = unique_name
             # Since this is a duplicate, we'll created it, but disable it. The user should revew the new and original to determine
             #   if they want to merge them, or get rid of one.
             loaded_JSON_file['enabled'] = False
         config_post = requests.post(config_url, data=json.dumps(loaded_JSON_file), headers=post_headers)
-        logging.info(' postConfigs status code for %s = %s', loaded_JSON_file['name'], config_post.status_code)
+        logging.info(' postConfigs status code for %s = %s', loaded_JSON_file[NameKey], config_post.status_code)
         if config_post.status_code != 201:
-            logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file['name'],config_post.status_code)
+            logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
+            print('postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
         else:
-            confirmation_dict.update({loaded_JSON_file['name'] : ConfigJsonPath[config_iteration]})
+            confirmation_dict.update({loaded_JSON_file[NameKey] : ConfigJsonPath[config_iteration]})
         sleep(10)
         config_iteration += 1
     return confirmation_dict
 
-def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, config_type):
+def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, config_type, NameKey):
     """ This function confirms the creation for all successful config posts in the function postConfig. First, it runs another GET against either the supplied
     list_customservices_api or list_requestattributes_api to gather the most up-to-date list names_list that exist. For all successful (status 201) postConfig items in confirmation_dict,
     this function checks to see if they exist in names_list. If they do, a success message is written to the log. If not, it tries to post again.  If the post does not receive a 201,
@@ -180,7 +181,7 @@ def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, conf
         recheck_confirmCreation = {}
         sleep(10)
         config_url = dtTenantURL + APIEndPoint
-        name_values = getExistingConfigs(getExAPIEndPoint ,config_type)
+        name_values = getExistingConfigs(getExAPIEndPoint ,config_type, NameKey)
         for key, value in created_configs.items():
             if key in name_values:
                 print('Successfully Confirmed {} was created'.format(key))
@@ -315,7 +316,7 @@ config_json_path = gatherFileList(parent_file_name)
 # configurations of the same name.
 
 print('Get existing Custom Services')
-name_values = getExistingConfigs(constants_dict['list_customservices_api'],constants_dict['custom_srvc_type'])
+name_values = getExistingConfigs(constants_dict['list_customservices_api'],constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
 print('---Get existing Custom Services was successful')
 
 
@@ -326,7 +327,7 @@ print('---Get existing Custom Services was successful')
 # Returns a list of services created with a 201 response for valdiation in a later step
 
 print('Attempting to create Custom Services')
-confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_json_path)
+confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_json_path,constants_dict['nameKey_custom_svc'])
 print('---Create Custom Services complete')
 
 created_custom_services = confirmation_dict
@@ -337,14 +338,14 @@ created_custom_services = confirmation_dict
 
 print('Verifying creation of Custom Services')
 success = False
-success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'])
+success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
 
 #For all customm services that had to be re-posted in the confirmation step just above, this next function call goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful. If there is some other problem,
 # this has the potential to create a serious loop.
 
 while success == False:
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'])
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
 print('---Custom Services Creation Verification Complete')
 
 
@@ -355,7 +356,7 @@ print('---Custom Services Creation Verification Complete')
 # =========================================================
 # If you have no request attributes to create, comment out this section.
 
-# This file contains the path to the json files of the custom services you want to create.
+# This file contains the path to the json files of the request attributes you want to create.
 
 parent_file_name = 'RequestAttributeList.txt'
 
@@ -364,23 +365,23 @@ parent_file_name = 'RequestAttributeList.txt'
 config_json_path = gatherFileList(parent_file_name)
 
 
-#Run a GET against the list custom services API to get a name list of existing custom services
+#Run a GET against the list request attributes API to get a name list of existing request attributes
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
 print('Get existing Request Attributes')
-name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
+name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
 print('---Get existing Request Attributes was successful')
 
 #Iterate through the JSON files in 'RequestAttributeList.json' and do the following:
 # Check if attribute name to be created already exists
 #   If name already exists, change name by appending todays date in YYYYMMDD format.
-# Create custom service and confirm a 201 response code.
-# Returns a list of services created with a 201 response for valdiation in a later step
+# Create request attribute and confirm a 201 response code.
+# Returns a list of attributes created with a 201 response for valdiation in a later step
 
 print('Attempting to create Request Attributes')
-confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_json_path)
-print('---Create Request Attributes Services complete')
+confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_json_path,constants_dict['nameKey_request_attr'])
+print('---Create Request Attributes complete')
 
 created_request_attributes = confirmation_dict
 
@@ -390,14 +391,65 @@ created_request_attributes = confirmation_dict
 
 print('Verifying creation of Request Attributes')
 success = False
-success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
+success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
 
 #For all request attributes that had to be re-posted in the confirmation step just above, this next function goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful.
 
 while success == False:
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'])
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
 print('---Request Attributes Creation Verification Complete')
+
+
+# =========================================================
+# CREATE REQUEST NAMING RULES
+# =========================================================
+# If you have no request naming rules to create, comment out this section.
+
+# This file contains the path to the json files of the request naming rules you want to create.
+
+parent_file_name = 'RequestNamingList.txt'
+
+#Process the parent file - generate config_json_path list which is used to load JSON payloads later.
+
+config_json_path = gatherFileList(parent_file_name)
+
+
+#Run a GET against the list request naming rules API to get a name list of existing request naming rules
+# that already exist on the Dynatrace tenant. These will be used to check for pre-existing
+# configurations of the same name.
+
+print('Get existing Request Naming Rules')
+name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
+print('---Get existing Request Naming Rules was successful')
+
+#Iterate through the JSON files in 'RequestNamingList.json' and do the following:
+# Check if naming rule name to be created already exists
+#   If name already exists, change name by appending todays date in YYYYMMDD format.
+# Create Request Naming Rule and confirm a 201 response code.
+# Returns a list of naming rules created with a 201 response for valdiation in a later step
+
+print('Attempting to create Request Naming Rules')
+confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_json_path, constants_dict['nameKey_request_name'])
+print('---Create Request Naming Rules complete')
+
+created_request_naming_rules = confirmation_dict
+
+#After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
+# this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
+# if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
+
+print('Verifying creation of Request Naming Rules')
+success = False
+success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+
+#For all request naming rules that had to be re-posted in the confirmation step just above, this next function goes back and checks
+# for their successful creation again. It repeats the check and re-submit until it's successful.
+
+while success == False:
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], recheck_confirmCreation, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+print('---Request Naming Rules Creation Verification Complete')
+
 
 # =========================================================
 # FINISH
