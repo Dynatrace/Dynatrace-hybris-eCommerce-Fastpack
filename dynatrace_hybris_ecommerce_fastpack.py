@@ -20,7 +20,7 @@ from time import sleep
 
 config_data_len= 0
 config_iteration = 0
-config_json_path = []
+config_file_path = []
 confirmation_dict = {}
 constants_dict = {}
 dtTenantURL = 'https://'
@@ -73,6 +73,19 @@ def getdtTenantURL():
             exit(1)
         return dtTenantURL
 
+def getPLUGINAPIToken():
+    """ this function gets the PLUGIN api token, validates it's a length of 21, and returns it to the PLUGINapitoken variable"""
+    PLUGINapitoken = input('Enter your tenant API token for the PLUGIN API: ')
+    if len(PLUGINapitoken) == 21:
+        return PLUGINapitoken
+    else:
+        PLUGINapitoken = input('Please enter a valid tenant API token for the PLUGIN API. You cannot proceed without it: ')
+        if len(PLUGINapitoken) == 21:
+            return PLUGINapitoken
+        else:
+            print('please obtain a valid tenant API token for the PLUGIN API before proceeding')
+            logging.error(' PLUGIN API Token Error: Length should be 21')
+            sys.exit(1)
 
 def validateGetResponse(apitoken, dtTenantURL, validateGetAPI):
     """ this function validates the respnse code of a specified get. Pass any GET api request, along with tenant and token, so long as the headers match.
@@ -108,17 +121,17 @@ def validateGetResponse(apitoken, dtTenantURL, validateGetAPI):
         sys.exit(1)
 
 def gatherFileList(ParentFile):
-    """ This function reads the list of JSON files in the ParentFile to be used to create the configurations and stores them in the  config_json_path list"""
-    config_json_path = []
+    """ This function reads the list of files in the ParentFile to be used to create the configurations and stores them in the  config_file_path list"""
+    config_file_path = []
     try:
         with open(ParentFile) as parent_file_list:
             for line in parent_file_list:
-                config_json_path.extend([line.rstrip()])
+                config_file_path.extend([line.rstrip()])
     except Exception as e:
         print('Function gatherFileList: Cannot open file {}'.format(ParentFile))
         logging.error(' Function gatherFileList: Cannot open file %s', ParentFile)
         handleException(e)
-    return config_json_path
+    return config_file_path
 
 def getExistingConfigs(ConfigAPIEndpoint, getConfigType, NameKey):
     """ This function runs a GET against the supplied API EndPoint, either List Custom Services or List Request Attributes, and retrieves a list
@@ -139,7 +152,7 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
     the name and json file are stored in the confirmation_dict dictonary for use in the confirmCreation function. """
     confirmation_dict = {}
     config_iteration = 0
-    config_data_len= len(config_json_path)
+    config_data_len= len(config_file_path)
     config_url = dtTenantURL + APIEndPoint
     while config_iteration < config_data_len:
         try:
@@ -214,6 +227,33 @@ def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, conf
                 success = False
         return success, recheck_confirmCreation
 
+def postPLUGIN(APIEndPoint, ConfigPLUGINPath):
+    """ This Function takes the list of PLUGIN Plugin ZIP files and iterates posting through them. If the PLUGIN Plugin already exist, the post will fail. In order to fix this,
+    open the .zip file and change the version number in the pl;ugin.json file. Then rezip the plugin.json file, using the original name of the zip file.
+    NOTE - the actual json files in the zip file have to be called plugin.json - hence we name the zip file something more specific. """
+    config_iteration = 0
+    config_data_len= len(config_file_path)
+    config_url = dtTenantURL + APIEndPoint
+    while config_iteration < config_data_len:
+        try:
+            loaded_PLUGIN_file = {'file': open(ConfigPLUGINPath[config_iteration], 'rb')}
+        except Exception as e:
+            print('Function postPLUGIN: could not open the file {}'.format(ConfigPLUGINPath[config_iteration]))
+            logging.error('Function postPLUGIN: could not open the file %s', ConfigPLUGINPath[config_iteration])
+            handleException(e)
+        PLUGIN_post = requests.post(config_url, files=loaded_PLUGIN_file, headers=PLUGIN_post_headers)
+        logging.info(' postPLUGIN status code for %s = %s', loaded_PLUGIN_file, PLUGIN_post.status_code)
+        print(' postPLUGIN status code for {} = {}'.format(loaded_PLUGIN_file, PLUGIN_post.status_code))
+        if PLUGIN_post.status_code != 200:
+            logging.warning(' postPLUGIN: failed to create PLUGIN Plugin for %s. Response code = %s', loaded_PLUGIN_file, PLUGIN_post.status_code)
+            print('postPLUGIN: failed to create PLUGIN Plugin for {}. Response code = {}'.format(loaded_PLUGIN_file, PLUGIN_post.status_code))
+        else:
+            print('Succesfully created PLUGIN Plugin for {}'.format(loaded_PLUGIN_file))
+            logging.info(' ==================================================================\n||------  %s Creation is successfully confirmed\n========================================================================', loaded_PLUGIN_file)
+        sleep(10)
+        config_iteration += 1
+    return
+
 # =========================================================
 # LOGGER
 # =========================================================
@@ -248,6 +288,7 @@ with open('Constants.txt') as constants_file:
 # Uncomment these when ready to run for real
 apitoken = getAPIToken()
 dtTenantURL += getdtTenantURL()
+PLUGINapitoken = getPLUGINAPIToken()
 
 # =========================================================
 # CONSTANTS
@@ -255,6 +296,7 @@ dtTenantURL += getdtTenantURL()
 
 get_headers = {'Accept':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
 post_headers = {'Content-Type':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
+PLUGIN_post_headers = {'Authorization':'Api-Token {}'.format(PLUGINapitoken)}
 today = datetime.date.today().strftime("%Y%m%d")
 
 # =========================================================
@@ -286,6 +328,11 @@ with open(logfile, 'a') as the_log_file:
     the_log_file.write('***** or the request attribute settings page: {}\n'.format(dtTenantURL + constants_dict['request_attribute_path']))
     the_log_file.write('***** Determine if you want delete the new config, replace your pre-existing one, or merge the two.\n')
     the_log_file.write('\n')
+    the_log_file.write('** Global Request Naming rules can be seen in the Request Naming Rules section of any service ,\n')
+    the_log_file.write('***** because they are global. Click the edit ellipsis on any service to access this section \n')
+    the_log_file.write('\n')
+    the_log_file.write('** JMX Metrics plugins can be seen on the custom plugins page: {}\n'.format(dtTenantURL + constants_dict['plugin_path']))
+    the_log_file.write('\n')
     the_log_file.write('**********************************************************************\n')
     the_log_file.write('**********************************************************************\n')
 
@@ -307,9 +354,9 @@ print('---Validation successful')
 
 parent_file_name = 'CustomServiceList.txt'
 
-#Process the parent file - generate config_json_path list which is used to load JSON payloads later.
+#Process the parent file - generate config_file_path list which is used to load JSON payloads later.
 
-config_json_path = gatherFileList(parent_file_name)
+config_file_path = gatherFileList(parent_file_name)
 
 #Run a GET against the list custom services API to get a name list of existing custom services
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
@@ -327,7 +374,7 @@ print('---Get existing Custom Services was successful')
 # Returns a list of services created with a 201 response for valdiation in a later step
 
 print('Attempting to create Custom Services')
-confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_json_path,constants_dict['nameKey_custom_svc'])
+confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_file_path,constants_dict['nameKey_custom_svc'])
 print('---Create Custom Services complete')
 
 created_custom_services = confirmation_dict
@@ -360,9 +407,9 @@ print('---Custom Services Creation Verification Complete')
 
 parent_file_name = 'RequestAttributeList.txt'
 
-#Process the parent file - generate config_json_path list which is used to load JSON payloads later.
+#Process the parent file - generate config_file_path list which is used to load JSON payloads later.
 
-config_json_path = gatherFileList(parent_file_name)
+config_file_path = gatherFileList(parent_file_name)
 
 
 #Run a GET against the list request attributes API to get a name list of existing request attributes
@@ -373,14 +420,14 @@ print('Get existing Request Attributes')
 name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
 print('---Get existing Request Attributes was successful')
 
-#Iterate through the JSON files in 'RequestAttributeList.json' and do the following:
+#Iterate through the JSON files in 'RequestAttributeList.txt' and do the following:
 # Check if attribute name to be created already exists
 #   If name already exists, change name by appending todays date in YYYYMMDD format.
 # Create request attribute and confirm a 201 response code.
 # Returns a list of attributes created with a 201 response for valdiation in a later step
 
 print('Attempting to create Request Attributes')
-confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_json_path,constants_dict['nameKey_request_attr'])
+confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_file_path,constants_dict['nameKey_request_attr'])
 print('---Create Request Attributes complete')
 
 created_request_attributes = confirmation_dict
@@ -410,9 +457,9 @@ print('---Request Attributes Creation Verification Complete')
 
 parent_file_name = 'RequestNamingList.txt'
 
-#Process the parent file - generate config_json_path list which is used to load JSON payloads later.
+#Process the parent file - generate config_file_path list which is used to load JSON payloads later.
 
-config_json_path = gatherFileList(parent_file_name)
+config_file_path = gatherFileList(parent_file_name)
 
 
 #Run a GET against the list request naming rules API to get a name list of existing request naming rules
@@ -423,14 +470,14 @@ print('Get existing Request Naming Rules')
 name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
 print('---Get existing Request Naming Rules was successful')
 
-#Iterate through the JSON files in 'RequestNamingList.json' and do the following:
+#Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
 # Check if naming rule name to be created already exists
 #   If name already exists, change name by appending todays date in YYYYMMDD format.
 # Create Request Naming Rule and confirm a 201 response code.
 # Returns a list of naming rules created with a 201 response for valdiation in a later step
 
 print('Attempting to create Request Naming Rules')
-confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_json_path, constants_dict['nameKey_request_name'])
+confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
 print('---Create Request Naming Rules complete')
 
 created_request_naming_rules = confirmation_dict
@@ -449,6 +496,31 @@ success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestn
 while success == False:
     success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], recheck_confirmCreation, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
 print('---Request Naming Rules Creation Verification Complete')
+
+
+# =========================================================
+# CREATE PLUGIN
+# =========================================================
+# If you have no Plugins to create, comment out this section.
+
+# This file contains the path to the ZIP files that contain the plugin.json files you want to import.
+
+parent_file_name = 'jmx_metrics.txt'
+
+#Process the parent file - generate config_file_path list which is used to load ZIP files later.
+
+config_file_path = gatherFileList(parent_file_name)
+
+#Iterate through the ZIP files in 'jmx_metrics.txt' and do the following and import the plugin.json file contained within.
+# If the plugin already exists, this will fail. In that case, extract the plugin.json file from the specific zip file,
+#  change the version number, save the plugin.json file and re-zip it as the original zip file name.
+# Aside from a http 200 response the only way to confirm success is by checking in the dynatace gui under
+#  Settings -> Monitoring -> Monitored technologied -> Custom Plugins
+
+print('Attempting to create Plugins')
+postPLUGIN(constants_dict['post_plugin_api'], config_file_path)
+print('---Create Plugins complete')
+
 
 
 # =========================================================

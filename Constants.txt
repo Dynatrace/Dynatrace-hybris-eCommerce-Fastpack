@@ -4,8 +4,10 @@ list_requestnamingrules_api : /api/config/v1/requestNaming
 post_customservices_api : /api/config/v1/customServices/java
 post_requestattributes_api : /api/config/v1/requestAttributes
 post_requestnamingrules_api : /api/config/v1/requestNaming
+post_plugin_api: /api/v1/plugins
 custom_service_path : /#settings/servicedetection/newcustomservices
 request_attribute_path : /#settings/servicedetection/requestattributes
+plugin_path : /#settings/monitoredtechnologies/customextensions
 custom_srvc_type : customServices
 request_attr_type : values
 request_name_type : requestNamings
