@@ -4,11 +4,12 @@ This is a Python 3 based script designed to import Custom Service, Request Attri
 This script was designed to be re-usable for deploying any Custom Services, Request Attributes, Request Naming Rules and JMX Metrics Plugins, not just Hybris. At a high level: you provide the inputs and the script posts them to the target tenant.
 
 
-## Pre-requisits
+## Pre-requisites
 * [Python3](https://www.python.org/downloads/)
 * A local copy of this repository
 * The following standard python modules:
   * datetime
+  * getpass
   * json
   * logging
   * requests
@@ -53,7 +54,7 @@ Each plugin JSON file **MUST** be named
 
 The plugin API imports ZIP files, not JSON files, so this is ok. each unique 'plugin.json' file gets put in a uniquely named ZIP file, like JMX_yQueryRegionCache.zip. These zip files are located in the JMX_metrics sub folder.
 
-For each JMX Plugin you want to import, place it's zip file in the JMX_metrics subfolder and add a reference to the jmx_metrics.txt file in the follwing format:
+For each JMX Plugin you want to import, place it's zip file in the JMX_metrics subfolder and add a reference to the jmx_metrics.txt file in the following format:
 > JMX_metrics/\<metricgroup\>.zip
 
 ## Log Folder
@@ -84,26 +85,30 @@ This section describes how the script operates.
 * The Constants file gets read and processed
 * The user is required to input their API Token. The token is checked to make sure it's 21 characters long. If not, and the user does not correct it, the script exits.
 * The user is required to input their tenant name. Since tenant names, especially if managed, can be almost anything, all we're doing here is verifying that the input is not null.
-* The user is required to input their Plugin API Token. The token is checked to make sure it's 21 characters long. If not, and the user does not correct it, the script exits.
 * Headers are created
 * A GET is run against custom services, checking for the status code. This is to determine if the API Token and Tenant are Valid.  If an HTTP 200 is not returned, the script exits with a specific message both in the terminal as well as in the log file
+
+
+* JMX plugins are imported
+  * The jmx_metrics.txt file is parsed and sent to the gatherFilesList function.
+  * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created.
+  * If there are plugins to be imported, the user is required to input their Plugin API Token. The token is checked to make sure it's 21 characters long. If not, and the user does not correct it, the script exits.
+  * The postPLUGIN function is called to create the JMX Metric Plugins, looping through all of the loaded ZIP files.
+  * With the POST of the plugin, the status code is checked. If it's a 200 status code - success, the name of the plugin zip file and status code are to the log and console. If the return code is not 200, the name of the script and status code are written to the log and the console.
+  * The plugin API does not currently allow for any confirmation by reading the plugin list.
+* When the script is complete, the terminal prompts the user to check the log file for results as well as instructions to verify the results in the tenant and make choices for identified, renamed duplicated.
+
+
 * Custom Services are created:
   * The CustomServicesList.txt file is parsed and sent to the gatherFilesList function.
   * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created
-  * The getExistingConfigs function is invoked and gathers a list of existing custom services.
+  * If there are custom services to be imported, the getExistingConfigs function is invoked and gathers a list of existing custom services.
   * The postConfigs function is called to create the custom services, looping through all of the loaded JSON files.
      * First, we check the name of the new custom service against the list of existing services. a duplicate cannot be created, so if a duplicate is found, we append today's date to the end of the name to make it unique. We do this because even though the names may be the same, the configuration may be different. We want to give the user the option as to whether or not they want to stay with their original config, use the new one, or, if there are difference, merge the differences.
      * Once the name is checked and possibly modified, the custom service is created. If the name has not been modified, the custom service is created as 'active'. If it's a duplicate and the name was modified, it is created but set to 'inactive' in order to avoid any conflicts.  
      * With the POST of the config, the status code is checked. If it's a 201 status code - success, the name of the config and the file are written to a library so they can be verified in the next step. If the status is not 201, the creation of that custom service is aborted and the function loops to the next.
   * Once all of the custom services are created, the confirmCreation function is invoked. This takes the list of custom service names (the modified ones if they had to get modified) and the JSON file for all custom services that returned a 201 success during creation. The function runs another GET against the list custom services endpoint, capturing the names of the existing custom services which should now contain the new services. The names returned in by postConfigs are checked against the names from the new GET. If the name exists, the function writes a success message to the console and the log. If the name does not exist, the custom service is posted and if there's a 201 result, the name and JSON file get written to another confirmation dictionary for use in the next step. If the result is not a 201, that custom service is aborted.
-  * In the final step, we loop through the confimation step until all created services exist. There is a small chance for an endless loop here if something very strange is wrong, but remember, only services that get a 201 status are re-checked. We will not be in a situation where a 4xx or 5xx result will result in an endless loop, as those ones are not retried.
-     * these confirmation steps were created becuase of a known issue where in certain circumstances, a 201 result will be returned, but the configuration will not persist. Once this issue is resolved, we can decided to either keep the confirmation steps or get rid of them. I'm leaning towards keeping them.  
-* The entire process above is repeated for the Request Atttrubutes. All of the same functions are used.
+  * In the final step, we loop through the confirmation step until all created services exist. There is a small chance for an endless loop here if something very strange is wrong, but remember, only services that get a 201 status are re-checked. We will not be in a situation where a 4xx or 5xx result will result in an endless loop, as those ones are not retried.
+     * these confirmation steps were created because of a known issue where in certain circumstances, a 201 result will be returned, but the configuration will not persist. Once this issue is resolved, we can decided to either keep the confirmation steps or get rid of them. I'm leaning towards keeping them.  
+* The entire process above is repeated for the Request Attributes. All of the same functions are used.
 * The entire process above is repeated for the Request Naming Rules. All of the same functions are used.
-* JMX plugins are imported
-  * The jmx_metrics.txt file is parsed and sent to the fatherFilesList function.
-  * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created.
-  * The postPLUGIN function is called to create the JMX Metric Plugins, looping through all of the loaded ZIP files.
-  * With the POST of the plugin, the status code is checked. If it's a 200 status code - success, the name of the plugin zip file and status code are to the log and console. If the return code is not 200, the name of the script and status code are written to the log and the console.
-  * The plugin API does not currently allow for any confirmation by reading the plugin list.
-* When the script is complete, the terminal prompts the user to check the log file for results as well as instructions to verify the results in the tenant and make choices for identified, renamed duplicated.

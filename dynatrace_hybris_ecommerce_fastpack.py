@@ -8,6 +8,7 @@
 # =========================================================
 
 import datetime
+import getpass
 import json
 import logging
 import requests
@@ -48,11 +49,11 @@ def handleException(e):
 
 def getAPIToken():
     """ this function gets the api token, validates it's a length of 21, and returns it to the apitoken variable"""
-    apitoken = input('Enter your tenant API token for the Config API: ')
+    apitoken = getpass.getpass(prompt='Enter your tenant API token for the Config API: ', stream = None)
     if len(apitoken) == 21:
         return apitoken
     else:
-        apitoken = input('Please enter a valid tenant API token for the Config API. You cannot proceed without it: ')
+        apitoken = getpass.getpass(prompt='Please enter a valid tenant API token for the Config API. You cannot proceed without it: ', stream = None)
         if len(apitoken) == 21:
             return apitoken
         else:
@@ -75,11 +76,11 @@ def getdtTenantURL():
 
 def getPLUGINAPIToken():
     """ this function gets the PLUGIN api token, validates it's a length of 21, and returns it to the PLUGINapitoken variable"""
-    PLUGINapitoken = input('Enter your tenant API token for the PLUGIN API: ')
+    PLUGINapitoken = getpass.getpass(prompt='Enter your tenant API token for the PLUGIN API: ', stream = None)
     if len(PLUGINapitoken) == 21:
         return PLUGINapitoken
     else:
-        PLUGINapitoken = input('Please enter a valid tenant API token for the PLUGIN API. You cannot proceed without it: ')
+        PLUGINapitoken = getpass.getpass(prompt='Please enter a valid tenant API token for the PLUGIN API. You cannot proceed without it: ', stream = None)
         if len(PLUGINapitoken) == 21:
             return PLUGINapitoken
         else:
@@ -288,7 +289,6 @@ with open('Constants.txt') as constants_file:
 # Uncomment these when ready to run for real
 apitoken = getAPIToken()
 dtTenantURL += getdtTenantURL()
-PLUGINapitoken = getPLUGINAPIToken()
 
 # =========================================================
 # CONSTANTS
@@ -296,7 +296,6 @@ PLUGINapitoken = getPLUGINAPIToken()
 
 get_headers = {'Accept':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
 post_headers = {'Content-Type':'application/json; charset=utf-8', 'Authorization':'Api-Token {}'.format(apitoken)}
-PLUGIN_post_headers = {'Authorization':'Api-Token {}'.format(PLUGINapitoken)}
 today = datetime.date.today().strftime("%Y%m%d")
 
 # =========================================================
@@ -345,6 +344,43 @@ print('Validating API access on the tenant')
 validateGetResponse(apitoken, dtTenantURL, constants_dict['list_customservices_api'])
 print('---Validation successful')
 
+
+# =========================================================
+# CREATE PLUGIN
+# =========================================================
+# If you have no Plugins to create, comment out this section.
+
+# This file contains the path to the ZIP files that contain the plugin.json files you want to import.
+
+parent_file_name = 'jmx_metrics.txt'
+
+#Process the parent file - generate config_file_path list which is used to load ZIP files later.
+
+config_file_path = gatherFileList(parent_file_name)
+
+#Check is there are plugins to be loaded in the jmx_metrics.txt file.
+if len(config_file_path) > 0:
+
+#Get the user to input the Plugin API token and create the header
+    PLUGINapitoken = getPLUGINAPIToken()
+    PLUGIN_post_headers = {'Authorization':'Api-Token {}'.format(PLUGINapitoken)}
+
+# Iterate through the ZIP files in 'jmx_metrics.txt' and import the plugin.json file contained within.
+#  If the plugin already exists, this will fail. In that case, extract the plugin.json file from the specific zip file,
+#   change the version number, save the plugin.json file and re-zip it as the original zip file name.
+#  Aside from a http 200 response the only way to confirm success is by checking in the dynatace gui under
+#   Settings -> Monitoring -> Monitored technologied -> Custom Plugins
+
+    print('Attempting to create Plugins')
+    postPLUGIN(constants_dict['post_plugin_api'], config_file_path)
+    print('---Create Plugins complete')
+
+#If there are no plugins to be imported, output this message
+else:
+    print('There are no plugins in jmx_metrics.txt to be imported')
+    logging.info(' ==================================================================\n||------  There are no plugins in jmx_metrics.txt to be imported\n========================================================================')
+
+
 # =========================================================
 # CREATE CUSTOM SERVICES
 # =========================================================
@@ -358,13 +394,16 @@ parent_file_name = 'CustomServiceList.txt'
 
 config_file_path = gatherFileList(parent_file_name)
 
+#Check is there are custom services to be loaded in the CustomServicesList.txt file.
+if len(config_file_path) > 0:
+
 #Run a GET against the list custom services API to get a name list of existing custom services
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
-print('Get existing Custom Services')
-name_values = getExistingConfigs(constants_dict['list_customservices_api'],constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
-print('---Get existing Custom Services was successful')
+    print('Get existing Custom Services')
+    name_values = getExistingConfigs(constants_dict['list_customservices_api'],constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
+    print('---Get existing Custom Services was successful')
 
 
 #Iterate through the JSON files in 'CustomServiceList.txt' and do the following:
@@ -373,28 +412,32 @@ print('---Get existing Custom Services was successful')
 # Create custom service and confirm a 201 response code.
 # Returns a list of services created with a 201 response for valdiation in a later step
 
-print('Attempting to create Custom Services')
-confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_file_path,constants_dict['nameKey_custom_svc'])
-print('---Create Custom Services complete')
+    print('Attempting to create Custom Services')
+    confirmation_dict = postConfigs(constants_dict['post_customservices_api'], name_values, config_file_path,constants_dict['nameKey_custom_svc'])
+    print('---Create Custom Services complete')
 
-created_custom_services = confirmation_dict
+    created_custom_services = confirmation_dict
 
 #After the services are created, this function is called in order to confirm the that the custom services were actually created.
 # this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
 # if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
-print('Verifying creation of Custom Services')
-success = False
-success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
+    print('Verifying creation of Custom Services')
+    success = False
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
 
 #For all customm services that had to be re-posted in the confirmation step just above, this next function call goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful. If there is some other problem,
 # this has the potential to create a serious loop.
 
-while success == False:
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
-print('---Custom Services Creation Verification Complete')
+    while success == False:
+        success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
+    print('---Custom Services Creation Verification Complete')
 
+#If there are no custom services to be imported, output this message
+else:
+    print('There are no custom services in CustomServiceList.txt to be imported')
+    logging.info(' ==================================================================\n||------  There are no custom services in CustomServiceList.txt to be imported\n========================================================================')
 
 
 
@@ -411,14 +454,16 @@ parent_file_name = 'RequestAttributeList.txt'
 
 config_file_path = gatherFileList(parent_file_name)
 
+#Check is there are request attributes to be loaded in the RequestAttributesList.txt file.
+if len(config_file_path) > 0:
 
 #Run a GET against the list request attributes API to get a name list of existing request attributes
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
-print('Get existing Request Attributes')
-name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
-print('---Get existing Request Attributes was successful')
+    print('Get existing Request Attributes')
+    name_values = getExistingConfigs(constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
+    print('---Get existing Request Attributes was successful')
 
 #Iterate through the JSON files in 'RequestAttributeList.txt' and do the following:
 # Check if attribute name to be created already exists
@@ -426,27 +471,31 @@ print('---Get existing Request Attributes was successful')
 # Create request attribute and confirm a 201 response code.
 # Returns a list of attributes created with a 201 response for valdiation in a later step
 
-print('Attempting to create Request Attributes')
-confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_file_path,constants_dict['nameKey_request_attr'])
-print('---Create Request Attributes complete')
+    print('Attempting to create Request Attributes')
+    confirmation_dict = postConfigs(constants_dict['post_requestattributes_api'], name_values, config_file_path,constants_dict['nameKey_request_attr'])
+    print('---Create Request Attributes complete')
 
-created_request_attributes = confirmation_dict
+    created_request_attributes = confirmation_dict
 
 #After the attributes are created, this function is called in order to confirm the that the request attributes were actually created.
 # this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
 # if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
-print('Verifying creation of Request Attributes')
-success = False
-success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
+    print('Verifying creation of Request Attributes')
+    success = False
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
 
 #For all request attributes that had to be re-posted in the confirmation step just above, this next function goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful.
 
-while success == False:
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
-print('---Request Attributes Creation Verification Complete')
+    while success == False:
+        success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
+    print('---Request Attributes Creation Verification Complete')
 
+#If there are no request attributes to be imported, output this message
+else:
+    print('There are no request attributes in RequestAttributeList.txt to be imported')
+    logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
 # =========================================================
 # CREATE REQUEST NAMING RULES
@@ -461,14 +510,16 @@ parent_file_name = 'RequestNamingList.txt'
 
 config_file_path = gatherFileList(parent_file_name)
 
+#Check is there are request naming rules to be loaded in the RequestNamingList.txt file.
+if len(config_file_path) > 0:
 
 #Run a GET against the list request naming rules API to get a name list of existing request naming rules
 # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
 # configurations of the same name.
 
-print('Get existing Request Naming Rules')
-name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
-print('---Get existing Request Naming Rules was successful')
+    print('Get existing Request Naming Rules')
+    name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
+    print('---Get existing Request Naming Rules was successful')
 
 #Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
 # Check if naming rule name to be created already exists
@@ -476,50 +527,34 @@ print('---Get existing Request Naming Rules was successful')
 # Create Request Naming Rule and confirm a 201 response code.
 # Returns a list of naming rules created with a 201 response for valdiation in a later step
 
-print('Attempting to create Request Naming Rules')
-confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
-print('---Create Request Naming Rules complete')
+    print('Attempting to create Request Naming Rules')
+    confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
+    print('---Create Request Naming Rules complete')
 
-created_request_naming_rules = confirmation_dict
+    created_request_naming_rules = confirmation_dict
 
 #After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
 # this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
 # if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
-print('Verifying creation of Request Naming Rules')
-success = False
-success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+    print('Verifying creation of Request Naming Rules')
+    success = False
+    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
 
 #For all request naming rules that had to be re-posted in the confirmation step just above, this next function goes back and checks
 # for their successful creation again. It repeats the check and re-submit until it's successful.
 
-while success == False:
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], recheck_confirmCreation, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
-print('---Request Naming Rules Creation Verification Complete')
+    while success == False:
+        success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], recheck_confirmCreation, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+    print('---Request Naming Rules Creation Verification Complete')
+
+#If there are no request naming rules to be imported, output this message
+else:
+    print('There are no request attributes in RequestAttributeList.txt to be imported')
+    logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
 
-# =========================================================
-# CREATE PLUGIN
-# =========================================================
-# If you have no Plugins to create, comment out this section.
 
-# This file contains the path to the ZIP files that contain the plugin.json files you want to import.
-
-parent_file_name = 'jmx_metrics.txt'
-
-#Process the parent file - generate config_file_path list which is used to load ZIP files later.
-
-config_file_path = gatherFileList(parent_file_name)
-
-#Iterate through the ZIP files in 'jmx_metrics.txt' and do the following and import the plugin.json file contained within.
-# If the plugin already exists, this will fail. In that case, extract the plugin.json file from the specific zip file,
-#  change the version number, save the plugin.json file and re-zip it as the original zip file name.
-# Aside from a http 200 response the only way to confirm success is by checking in the dynatace gui under
-#  Settings -> Monitoring -> Monitored technologied -> Custom Plugins
-
-print('Attempting to create Plugins')
-postPLUGIN(constants_dict['post_plugin_api'], config_file_path)
-print('---Create Plugins complete')
 
 
 
