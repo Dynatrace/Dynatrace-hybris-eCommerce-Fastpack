@@ -12,7 +12,7 @@
       "attribute": "SERVICE_REQUEST_ATTRIBUTE",
       "comparisonInfo": {
         "type": "STRING_REQUEST_ATTRIBUTE",
-        "requestAttribute": "yCronJobName",
+        "requestAttribute": "yCronJob_Name",
         "comparison": "EXISTS",
         "value": true,
         "negate": false
@@ -25,7 +25,7 @@
       "attribute": "SERVICE_REQUEST_ATTRIBUTE",
       "kind": "BEFORE_DELIMITER",
       "delimiterOrRegex": "(",
-      "requestAttribute": "yCronJobName",
+      "requestAttribute": "yCronJob_Name",
       "normalization": "ORIGINAL"
     }
   ],
