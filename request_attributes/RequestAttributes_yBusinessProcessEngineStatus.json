@@ -5,7 +5,7 @@
     ]
   },
   "id": "",
-  "name": "yBusiness ProcessEngine Status",
+  "name": "yBusiness_ProcessEngine_Status",
   "enabled": true,
   "dataType": "STRING",
   "dataSources": [
