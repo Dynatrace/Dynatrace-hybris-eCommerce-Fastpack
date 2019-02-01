@@ -8,7 +8,7 @@ post_plugin_api: /api/v1/plugins
 custom_service_path : /#settings/servicedetection/newcustomservices
 request_attribute_path : /#settings/servicedetection/requestattributes
 plugin_path : /#settings/monitoredtechnologies/customextensions
-custom_srvc_type : customServices
+custom_srvc_type : values
 request_attr_type : values
 request_name_type : requestNamings
 nameKey_custom_svc : name
