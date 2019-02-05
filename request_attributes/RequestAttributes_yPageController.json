@@ -12,6 +12,7 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
+      "technology":"JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false,
@@ -23,7 +24,6 @@
       "methods": [
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PUBLIC",
             "modifiers": [],
             "className": "de.hybris.platform.acceleratorstorefrontcommons.controllers.AbstractController",

@@ -19,7 +19,7 @@
       }
     }
   ],
-  "extractions": [
+  "placeholders": [
   ],
   "skipPersonalDataMasking": true,
   "serviceType": "GENERIC"

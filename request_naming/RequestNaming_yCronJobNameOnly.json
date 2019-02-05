@@ -19,7 +19,7 @@
       }
     }
   ],
-  "extractions": [
+  "placeholders": [
     {
       "name": "CronJobNameOnly",
       "attribute": "SERVICE_REQUEST_ATTRIBUTE",

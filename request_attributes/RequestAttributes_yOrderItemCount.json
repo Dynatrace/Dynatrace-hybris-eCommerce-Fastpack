@@ -12,6 +12,7 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
+      "technology":"JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false
@@ -19,7 +20,6 @@
       "methods": [
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PUBLIC",
             "modifiers": [],
             "className": "de.hybris.platform.commercefacades.order.impl.DefaultCheckoutFacade",
@@ -39,6 +39,7 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
+      "technology": "JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false
@@ -46,7 +47,6 @@
       "methods": [
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PROTECTED",
             "modifiers": [],
             "className": "de.hybris.platform.acceleratorfacades.order.impl.DefaultAcceleratorCheckoutFacade",
