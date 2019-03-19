@@ -12,11 +12,11 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
-      "technology":"JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false
       },
+      "technology": "JAVA",
       "methods": [
         {
           "method": {
@@ -35,7 +35,6 @@
         },
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PUBLIC",
             "modifiers": [],
             "className": "org.apache.solr.client.solrj.SolrClient",
@@ -53,7 +52,6 @@
         },
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PUBLIC",
             "modifiers": [],
             "className": "org.apache.solr.client.solrj.SolrClient",
@@ -70,7 +68,6 @@
         },
         {
           "method": {
-            "technology": "JAVA",
             "visibility": "PUBLIC",
             "modifiers": [],
             "className": "org.apache.solr.client.solrj.SolrClient",
