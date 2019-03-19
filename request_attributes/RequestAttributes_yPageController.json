@@ -12,7 +12,6 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
-      "technology":"JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false,
@@ -21,6 +20,7 @@
           "delimiter": "Controller"
         }
       },
+      "technology": "JAVA",
       "methods": [
         {
           "method": {
