@@ -75,7 +75,7 @@ Once all of your files are in order, it's as simple as navigating to repository 
 ```
 python dynatrace_hybris_ecommerce_fastpack.py
 ```
-
+ 
 Please take into account that your python command may vary. Some may have to us python3, others py. Basically, use whatever python command will invoke your python 3 CLI.
 
 ## How the script operates
