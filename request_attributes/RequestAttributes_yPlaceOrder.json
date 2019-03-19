@@ -12,11 +12,11 @@
     {
       "enabled": true,
       "source": "METHOD_PARAM",
-      "technology":"JAVA",
       "valueProcessing": {
         "splitAt": "",
         "trim": false
       },
+      "technology": "JAVA",
       "methods": [
         {
           "method": {
