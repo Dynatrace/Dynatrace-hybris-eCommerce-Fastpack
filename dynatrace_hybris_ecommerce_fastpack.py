@@ -153,7 +153,7 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
     the name and json file are stored in the confirmation_dict dictonary for use in the confirmCreation function. """
     confirmation_dict = {}
     config_iteration = 0
-    config_data_len= len(config_file_path)
+    config_data_len= len(ConfigJsonPath)
     config_url = dtTenantURL + APIEndPoint
     while config_iteration < config_data_len:
         try:
@@ -175,65 +175,39 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
         logging.info(' postConfigs status code for %s = %s', loaded_JSON_file[NameKey], config_post.status_code)
         if config_post.status_code != 201:
             logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
-            print('postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
+            print('ERROR: postConfigs: failed to create configuration for {0}. Response code = {1}'.format( loaded_JSON_file[NameKey],config_post.status_code))
         else:
+            print('SUCCESS postConfigs status code for {0} = {1}'.format(loaded_JSON_file[NameKey], config_post.status_code))
             confirmation_dict.update({loaded_JSON_file[NameKey] : ConfigJsonPath[config_iteration]})
-        sleep(10)
         config_iteration += 1
     return confirmation_dict
 
-def confirmCreation(APIEndPoint, CreatedConfigs, success, getExAPIEndPoint, config_type, NameKey):
+def confirmCreation(APIEndPoint, CreatedConfigs, getAPIEndPoint, config_type, NameKey):
     """ This function confirms the creation for all successful config posts in the function postConfig. First, it runs another GET against either the supplied
-    list_customservices_api or list_requestattributes_api to gather the most up-to-date list names_list that exist. For all successful (status 201) postConfig items in confirmation_dict,
-    this function checks to see if they exist in names_list. If they do, a success message is written to the log. If not, it tries to post again.  If the post does not receive a 201,
-    the config is not tried again. If a 201 is retruned, the name and json file path are stored in the dictionary recheck_confirmCreation so this function can be re-run to confirm their existence."""
-    if success == True:
-        return success
+     list_customservices_api or list_requestattributes_api to gather the most up-to-date list names_list that exist. For all successful (status 201) postConfig items in confirmation_dict,
+     this function checks to see if they exist in names_list. If they do, a success message is written to the log and terminal. If not, an error is written to the log and terminal."""
+    if len(CreatedConfigs)==0:
+        logging.warning('==================================================================\nERROR: NO configureations created against %s \n========================================================================', getAPIEndPoint)
+        print('==================================================================\nERROR: NO configureations created against {} \n========================================================================'.format(getAPIEndPoint))
     else:
-        success = True
-        created_configs = CreatedConfigs
-        recheck_confirmCreation = {}
-        sleep(10)
         config_url = dtTenantURL + APIEndPoint
-        name_values = getExistingConfigs(getExAPIEndPoint ,config_type, NameKey)
-        for key, value in created_configs.items():
+        name_values = getExistingConfigs(getAPIEndPoint ,config_type, NameKey)
+        for key, value in CreatedConfigs.items():
             if key in name_values:
                 print('Successfully Confirmed {} was created'.format(key))
                 logging.info(' ==================================================================\n||------  %s Creation is successfully confirmed\n========================================================================', key)
             else:
-                try:
-                    with open(value) as the_JSON_file:
-                        loaded_JSON_file = json.load(the_JSON_file)
-                except Exception as e:
-                    print('Function confirmCreation: could not open file {}'.format(value))
-                    logging.error(' Function confirmCreation: could not open file %s', value)
-                    handleException(e)
-
-                #The JSON file has the original name. If the name was modified previously in the postConfigs function, the JSON file
-                # will not have that change. The modified name is reflected in the key value, as it was added to the confirmation_dict
-                # in the postConfigs function, or below in the recheck_confirCreation if this is the second execution of this function.
-                loaded_JSON_file['name'] = key
-
-                # If the value of today has been added to the config name, previously in postConfig, it is a duplicate.
-                #   For this reason, we want to insert it set to not active. This gives the user the ability th review and decide to
-                #   keep the original, keep the new, or otherwise merget the two.
-                if today in key:
-                    loaded_JSON_file['enabled'] = False
-                config_post = requests.post(config_url, data=json.dumps(loaded_JSON_file), headers=post_headers)
-                if config_post.status_code != 201:
-                    logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file['name'],config_post.status_code)
-                else:
-                    recheck_confirmCreation.update({key : value})
-                sleep(10)
-                success = False
-        return success, recheck_confirmCreation
+                logging.warning(' ==================================================================\nERROR: %s NOT CREATED in tenant %s\n========================================================================', key,dtTenantURL)
+                print('ERROR {0} NOT CREATED in tenant {1}'.format(key,dtTenantURL))
+        return
 
 def postPLUGIN(APIEndPoint, ConfigPLUGINPath):
     """ This Function takes the list of PLUGIN Plugin ZIP files and iterates posting through them. If the PLUGIN Plugin already exist, the post will fail. In order to fix this,
     open the .zip file and change the version number in the pl;ugin.json file. Then rezip the plugin.json file, using the original name of the zip file.
     NOTE - the actual json files in the zip file have to be called plugin.json - hence we name the zip file something more specific. """
     config_iteration = 0
-    config_data_len= len(config_file_path)
+    #config_data_len= len(config_file_path)
+    config_data_len= len(ConfigPLUGINPath)
     config_url = dtTenantURL + APIEndPoint
     while config_iteration < config_data_len:
         try:
@@ -251,7 +225,6 @@ def postPLUGIN(APIEndPoint, ConfigPLUGINPath):
         else:
             print('Succesfully created PLUGIN Plugin for {}'.format(loaded_PLUGIN_file))
             logging.info(' ==================================================================\n||------  %s Creation is successfully confirmed\n========================================================================', loaded_PLUGIN_file)
-        sleep(10)
         config_iteration += 1
     return
 
@@ -419,19 +392,9 @@ if len(config_file_path) > 0:
     created_custom_services = confirmation_dict
 
 #After the services are created, this function is called in order to confirm the that the custom services were actually created.
-# this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
-# if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
     print('Verifying creation of Custom Services')
-    success = False
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], created_custom_services, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
-
-#For all customm services that had to be re-posted in the confirmation step just above, this next function call goes back and checks
-# for their successful creation again. It repeats the check and re-submit until it's successful. If there is some other problem,
-# this has the potential to create a serious loop.
-
-    while success == False:
-        success, recheck_confirmCreation = confirmCreation(constants_dict['post_customservices_api'], recheck_confirmCreation, success, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
+    confirmCreation(constants_dict['post_customservices_api'], created_custom_services, constants_dict['list_customservices_api'], constants_dict['custom_srvc_type'],constants_dict['nameKey_custom_svc'])
     print('---Custom Services Creation Verification Complete')
 
 #If there are no custom services to be imported, output this message
@@ -478,18 +441,9 @@ if len(config_file_path) > 0:
     created_request_attributes = confirmation_dict
 
 #After the attributes are created, this function is called in order to confirm the that the request attributes were actually created.
-# this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
-# if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
     print('Verifying creation of Request Attributes')
-    success = False
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
-
-#For all request attributes that had to be re-posted in the confirmation step just above, this next function goes back and checks
-# for their successful creation again. It repeats the check and re-submit until it's successful.
-
-    while success == False:
-        success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestattributes_api'], recheck_confirmCreation, success, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
+    confirmCreation(constants_dict['post_requestattributes_api'], created_request_attributes, constants_dict['list_requestattributes_api'], constants_dict['request_attr_type'],constants_dict['nameKey_request_attr'])
     print('---Request Attributes Creation Verification Complete')
 
 #If there are no request attributes to be imported, output this message
@@ -497,65 +451,54 @@ else:
     print('There are no request attributes in RequestAttributeList.txt to be imported')
     logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
-# =========================================================
-# CREATE REQUEST NAMING RULES
-# =========================================================
-# If you have no request naming rules to create, comment out this section.
+# # =========================================================
+# # CREATE REQUEST NAMING RULES
+# # =========================================================
+# # If you have no request naming rules to create, comment out this section.
 
-# This file contains the path to the json files of the request naming rules you want to create.
+# # This file contains the path to the json files of the request naming rules you want to create.
 
-parent_file_name = 'RequestNamingList.txt'
+# parent_file_name = 'RequestNamingList.txt'
 
-#Process the parent file - generate config_file_path list which is used to load JSON payloads later.
+# #Process the parent file - generate config_file_path list which is used to load JSON payloads later.
 
-config_file_path = gatherFileList(parent_file_name)
+# config_file_path = gatherFileList(parent_file_name)
 
-#Check is there are request naming rules to be loaded in the RequestNamingList.txt file.
-if len(config_file_path) > 0:
+# #Check is there are request naming rules to be loaded in the RequestNamingList.txt file.
+# if len(config_file_path) > 0:
 
-#Run a GET against the list request naming rules API to get a name list of existing request naming rules
-# that already exist on the Dynatrace tenant. These will be used to check for pre-existing
-# configurations of the same name.
+# #Run a GET against the list request naming rules API to get a name list of existing request naming rules
+# # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
+# # configurations of the same name.
 
-    print('Get existing Request Naming Rules')
-    name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
-    print('---Get existing Request Naming Rules was successful')
+#     print('Get existing Request Naming Rules')
+#     name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
+#     print('---Get existing Request Naming Rules was successful')
 
-#Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
-# Check if naming rule name to be created already exists
-#   If name already exists, change name by appending todays date in YYYYMMDD format.
-# Create Request Naming Rule and confirm a 201 response code.
-# Returns a list of naming rules created with a 201 response for valdiation in a later step
+# #Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
+# # Check if naming rule name to be created already exists
+# #   If name already exists, change name by appending todays date in YYYYMMDD format.
+# # Create Request Naming Rule and confirm a 201 response code.
+# # Returns a list of naming rules created with a 201 response for valdiation in a later step
 
-    print('Attempting to create Request Naming Rules')
-    confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
-    print('---Create Request Naming Rules complete')
+#     print('Attempting to create Request Naming Rules')
+#     confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
+#     print('---Create Request Naming Rules complete')
 
-    created_request_naming_rules = confirmation_dict
+#     created_request_naming_rules = confirmation_dict
 
-#After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
-# this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
-# if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
+# #After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
+# # this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
+# # if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
-    print('Verifying creation of Request Naming Rules')
-    success = False
-    success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+#     print('Verifying creation of Request Naming Rules')
+#     confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
+#     print('---Request Naming Rules Creation Verification Complete')
 
-#For all request naming rules that had to be re-posted in the confirmation step just above, this next function goes back and checks
-# for their successful creation again. It repeats the check and re-submit until it's successful.
-
-    while success == False:
-        success, recheck_confirmCreation = confirmCreation(constants_dict['post_requestnamingrules_api'], recheck_confirmCreation, success, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
-    print('---Request Naming Rules Creation Verification Complete')
-
-#If there are no request naming rules to be imported, output this message
-else:
-    print('There are no request attributes in RequestAttributeList.txt to be imported')
-    logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
-
-
-
-
+# #If there are no request naming rules to be imported, output this message
+# else:
+#     print('There are no request attributes in RequestAttributeList.txt to be imported')
+#     logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
 
 # =========================================================
