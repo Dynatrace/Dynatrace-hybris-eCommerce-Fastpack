@@ -1,16 +1,16 @@
-list_customservices_api : /api/config/v1/customServices/java?includeProcessGroupReferences=false
-list_requestattributes_api : /api/config/v1/requestAttributes
-list_requestnamingrules_api : /api/config/v1/requestNaming
-post_customservices_api : /api/config/v1/customServices/java
-post_requestattributes_api : /api/config/v1/requestAttributes
-post_requestnamingrules_api : /api/config/v1/requestNaming
+list_customservices_api : /api/config/v1/service/customServices/java
+list_requestattributes_api : /api/config/v1/service/requestAttributes
+list_requestnamingrules_api : /api/config/v1/service/requestNaming
+post_customservices_api : /api/config/v1/service/customServices/java
+post_requestattributes_api : /api/config/v1/service/requestAttributes
+post_requestnamingrules_api : /api/config/v1/service/requestNaming?position=APPEND
 post_plugin_api: /api/v1/plugins
 custom_service_path : /#settings/servicedetection/newcustomservices
 request_attribute_path : /#settings/servicedetection/requestattributes
 plugin_path : /#settings/monitoredtechnologies/customextensions
 custom_srvc_type : values
 request_attr_type : values
-request_name_type : requestNamings
+request_name_type : values
 nameKey_custom_svc : name
 nameKey_request_attr : name
-nameKey_request_name : namingPattern
+nameKey_request_name : name
