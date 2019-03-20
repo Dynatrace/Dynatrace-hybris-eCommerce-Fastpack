@@ -1,8 +1,3 @@
-
-# change error prints to a file write, or both.
-# re-evaluate whether each exit should actually exit or continue, writing an out error instead that a specific step failed.
-
-
 # =========================================================
 # REQUIRED LIBRARIES
 # =========================================================
