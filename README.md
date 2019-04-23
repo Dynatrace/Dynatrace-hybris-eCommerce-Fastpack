@@ -1,4 +1,7 @@
 # Dynatrace-hybris-eCommerce-Fastpack
+
+Current Version supports Dynatrace v1.67+
+
 This is a Python 3 based script designed to import Custom Service, Request Attribute, and Global Request Naming definitions as well as JMX Plugin Metrics and deploy them to your Dynatrace Tenant through the Configuration API and JMX API. Specifically, the Custom Services, Request Attributes, Global Request Naming Rules and JMX metrics in this repo are for monitoring the Hybris eCommerce environment.
 
 This script was designed to be re-usable for deploying any Custom Services, Request Attributes, Request Naming Rules and JMX Metrics Plugins, not just Hybris. At a high level: you provide the inputs and the script posts them to the target tenant.
@@ -104,12 +107,9 @@ This section describes how the script operates.
   * The gatherFilesList function creates a library containing the path/filename of all of the custom services to be created
   * If there are custom services to be imported, the getExistingConfigs function is invoked and gathers a list of existing custom services.
   * The postConfigs function is called to create the custom services, looping through all of the loaded JSON files.
-     * First, we check the name of the new custom service against the list of existing services. a duplicate cannot be created, so if a duplicate is found, we append today's date to the end of the name to make it unique. We do this because even though the names may be the same, the configuration may be different. We want to give the user the option as to whether or not they want to stay with their original config, use the new one, or, if there are difference, merge the differences.
-     * Once the name is checked and possibly modified, the custom service is created. If the name has not been modified, the custom service is created as 'active'. If it's a duplicate and the name was modified, it is created but set to 'inactive' in order to avoid any conflicts.  
+     * First, we check the name of the new custom service against the list of existing services. Duplicates cannot be created. If a duplicate is found, the entry is skipped and a warning message is issued.
+     * If the entry is not a duplicate, the custom service is created.  
      * With the POST of the config, the status code is checked. If it's a 201 status code - success, the name of the config and the file are written to a library so they can be verified in the next step. If the status is not 201, the creation of that custom service is aborted and the function loops to the next.
-  * Once all of the custom services are created, the confirmCreation function is invoked. This takes the list of custom service names (the modified ones if they had to get modified) and the JSON file for all custom services that returned a 201 success during creation. The function runs another GET against the list custom services endpoint, capturing the names of the existing custom services which should now contain the new services. The names returned in by postConfigs are checked against the names from the new GET. If the name exists, the function writes a success message to the console and the log. If the name does not exist, the function writes an error message to the console and log file. .
+  * Once all of the custom services are created, the confirmCreation function is invoked. This takes the list of custom service names and the JSON file for all custom services that returned a 201 success during creation. The function runs another GET against the list custom services endpoint, capturing the names of the existing custom services which should now contain the new services. The names returned in by postConfigs are checked against the names from the new GET. If the name exists, the function writes a success message to the console and the log. If the name does not exist, the function writes an error message to the console and log file. .
 
-* The entire process above is repeated for the Request Attributes. All of the same functions are used.
-
-## there is a bug in Dynatrace 1.64 in regards to requst naming rules via the config API, so this section is currently commented out.
-* The entire process above is repeated for the Request Naming Rules. All of the same functions are used.
+* The entire process above is repeated for the Request Attributes and Request Naming Rules. All of the same functions are used.

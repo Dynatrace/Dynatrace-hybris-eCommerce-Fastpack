@@ -140,10 +140,27 @@ def getExistingConfigs(ConfigAPIEndpoint, getConfigType, NameKey):
         name_values.append(name_key[NameKey])
     return name_values
 
+def getExistingRequestNamingRules(ConfigAPIEndpoint, getConfigType, NameKey, NameKey2):
+    """ This function runs a GET against the Request Naming Rule API EndPoint and retrieves a list
+    of existing IDs. The IDs are then queried one by one to get the rule name, storing them in the name_values list. This list is used in functions postConfigs and confirmRequestNamingCreation.
+    The purpose is to be able to check for the existence a request naming rule that already has the same name. """
+    name_values = []
+    RNR_id_values = []
+    get_existing_configs_url = dtTenantURL + ConfigAPIEndpoint
+    get_configs = requests.get(get_existing_configs_url,headers=get_headers).json()
+    
+    # get a list of request naming rule IDs from the API
+    for name_key in get_configs[getConfigType]:
+        RNR_id_values.append(name_key[NameKey2])
+    # for each ID returned above, get the actual name of the request naming rule 
+    for RNR_ID in RNR_id_values:
+        get_configs = requests.get(get_existing_configs_url+'/'+RNR_ID,headers=get_headers).json()
+        name_values.append(get_configs[NameKey])
+    return name_values
+
 def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
     """ This Function takes the list of JSON files and iterates posting through them. First, it checks the name against name_values (see  function getExistingConfigs).
-    If the config name already exists, the new name gets modified by adding today's date to the end. Additionally, for these duplicates, the enable flag is set to False.
-    The user should check these duplicates and determine if they want to replace the exisiting one, delete the new one, or merge the two.
+    If the config name already exists, the item is skipped and the script moves onto the next item.
     Next, the custom service or request attribute is posted. If a 201 code (success) is not returned, this config is not tried again. For all posts with a 201 result,
     the name and json file are stored in the confirmation_dict dictonary for use in the confirmCreation function. """
     confirmation_dict = {}
@@ -159,21 +176,17 @@ def postConfigs(APIEndPoint, NameValues, ConfigJsonPath, NameKey):
             logging.error(' Function postConfigs: could not open the file %s', ConfigJsonPath[config_iteration])
             handleException(e)
         if loaded_JSON_file[NameKey] in NameValues:
-            unique_name = loaded_JSON_file[NameKey] + '_' + today
-            logging.info(' %s found in name_values. Creating alternate name: %s', loaded_JSON_file[NameKey], unique_name)
-            # Since the config already exists with the same name, append today's date to the name to create a new version
-            loaded_JSON_file[NameKey] = unique_name
-            # Since this is a duplicate, we'll created it, but disable it. The user should revew the new and original to determine
-            #   if they want to merge them, or get rid of one.
-            loaded_JSON_file['enabled'] = False
-        config_post = requests.post(config_url, data=json.dumps(loaded_JSON_file), headers=post_headers)
-        logging.info(' postConfigs status code for %s = %s', loaded_JSON_file[NameKey], config_post.status_code)
-        if config_post.status_code != 201:
-            logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
-            print('ERROR: postConfigs: failed to create configuration for {0}. Response code = {1}'.format( loaded_JSON_file[NameKey],config_post.status_code))
+            logging.warning('!!!!! WARNING !!!!!! postConfigs: configuration already exists for %s. New configuration not posted.', loaded_JSON_file[NameKey])
+            print('!!!!! WARNING !!!!!: postConfigs: configuration already exists for {0}. New configuration not posted.'.format( loaded_JSON_file[NameKey]))
         else:
-            print('SUCCESS postConfigs status code for {0} = {1}'.format(loaded_JSON_file[NameKey], config_post.status_code))
-            confirmation_dict.update({loaded_JSON_file[NameKey] : ConfigJsonPath[config_iteration]})
+            config_post = requests.post(config_url, data=json.dumps(loaded_JSON_file), headers=post_headers)
+            logging.info(' postConfigs status code for %s = %s', loaded_JSON_file[NameKey], config_post.status_code)
+            if config_post.status_code != 201:
+                logging.warning(' postConfigs: failed to create configuration for %s. Response code = %s', loaded_JSON_file[NameKey],config_post.status_code)
+                print('ERROR: postConfigs: failed to create configuration for {0}. Response code = {1}'.format( loaded_JSON_file[NameKey],config_post.status_code))
+            else:
+                print('SUCCESS postConfigs status code for {0} = {1}'.format(loaded_JSON_file[NameKey], config_post.status_code))
+                confirmation_dict.update({loaded_JSON_file[NameKey] : ConfigJsonPath[config_iteration]})
         config_iteration += 1
     return confirmation_dict
 
@@ -182,11 +195,28 @@ def confirmCreation(APIEndPoint, CreatedConfigs, getAPIEndPoint, config_type, Na
      list_customservices_api or list_requestattributes_api to gather the most up-to-date list names_list that exist. For all successful (status 201) postConfig items in confirmation_dict,
      this function checks to see if they exist in names_list. If they do, a success message is written to the log and terminal. If not, an error is written to the log and terminal."""
     if len(CreatedConfigs)==0:
-        logging.warning('==================================================================\nERROR: NO configureations created against %s \n========================================================================', getAPIEndPoint)
-        print('==================================================================\nERROR: NO configureations created against {} \n========================================================================'.format(getAPIEndPoint))
+        logging.warning('==================================================================\nWARNING: NO configureations created against %s \n========================================================================', getAPIEndPoint)
+        print('==================================================================\nWARNING: NO configureations created against {} \n========================================================================'.format(getAPIEndPoint))
     else:
         config_url = dtTenantURL + APIEndPoint
         name_values = getExistingConfigs(getAPIEndPoint ,config_type, NameKey)
+        for key, value in CreatedConfigs.items():
+            if key in name_values:
+                print('Successfully Confirmed {} was created'.format(key))
+                logging.info(' ==================================================================\n||------  %s Creation is successfully confirmed\n========================================================================', key)
+            else:
+                logging.warning(' ==================================================================\nERROR: %s NOT CREATED in tenant %s\n========================================================================', key,dtTenantURL)
+                print('ERROR {0} NOT CREATED in tenant {1}'.format(key,dtTenantURL))
+        return
+
+def confirmRequestNamingCreation(APIEndPoint, CreatedConfigs, getAPIEndPoint, config_type, NameKey, NameKey2):
+    """ This function is only for Request Naming. It's basically the same as confirmCreation, however, because of the way request naming rules are listed by ID, this one has to call getExistingRequestNamingRules instead of getExistingConfigs and needs an additional parameter."""
+    if len(CreatedConfigs)==0:
+        logging.warning('==================================================================\nWARNING: NO configureations created against %s \n========================================================================', getAPIEndPoint)
+        print('==================================================================\nWARNING: NO configureations created against {} \n========================================================================'.format(getAPIEndPoint))
+    else:
+        config_url = dtTenantURL + APIEndPoint
+        name_values = getExistingRequestNamingRules(getAPIEndPoint ,config_type, NameKey, NameKey2)
         for key, value in CreatedConfigs.items():
             if key in name_values:
                 print('Successfully Confirmed {} was created'.format(key))
@@ -446,54 +476,54 @@ else:
     print('There are no request attributes in RequestAttributeList.txt to be imported')
     logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
-# # =========================================================
-# # CREATE REQUEST NAMING RULES
-# # =========================================================
-# # If you have no request naming rules to create, comment out this section.
+# =========================================================
+# CREATE REQUEST NAMING RULES
+# =========================================================
+# If you have no request naming rules to create, comment out this section.
 
-# # This file contains the path to the json files of the request naming rules you want to create.
+# This file contains the path to the json files of the request naming rules you want to create.
 
-# parent_file_name = 'RequestNamingList.txt'
+parent_file_name = 'RequestNamingList.txt'
 
-# #Process the parent file - generate config_file_path list which is used to load JSON payloads later.
+#Process the parent file - generate config_file_path list which is used to load JSON payloads later.
 
-# config_file_path = gatherFileList(parent_file_name)
+config_file_path = gatherFileList(parent_file_name)
 
-# #Check is there are request naming rules to be loaded in the RequestNamingList.txt file.
-# if len(config_file_path) > 0:
+#Check is there are request naming rules to be loaded in the RequestNamingList.txt file.
+if len(config_file_path) > 0:
 
-# #Run a GET against the list request naming rules API to get a name list of existing request naming rules
-# # that already exist on the Dynatrace tenant. These will be used to check for pre-existing
-# # configurations of the same name.
+#Run a GET against the list request naming rules API to get a name list of existing request naming rules
+# that already exist on the Dynatrace tenant. These will be used to check for pre-existing
+# configurations of the same name.
 
-#     print('Get existing Request Naming Rules')
-#     name_values = getExistingConfigs(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'])
-#     print('---Get existing Request Naming Rules was successful')
+    print('Get existing Request Naming Rules')
+    name_values = getExistingRequestNamingRules(constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'], constants_dict['nameKey_request_name'], constants_dict['nameKey_request_name_2'])
+    print('---Get existing Request Naming Rules was successful')
 
-# #Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
-# # Check if naming rule name to be created already exists
-# #   If name already exists, change name by appending todays date in YYYYMMDD format.
-# # Create Request Naming Rule and confirm a 201 response code.
-# # Returns a list of naming rules created with a 201 response for valdiation in a later step
+#Iterate through the JSON files in 'RequestNamingList.txt' and do the following:
+# Check if naming rule name to be created already exists
+#   If name already exists, change name by appending todays date in YYYYMMDD format.
+# Create Request Naming Rule and confirm a 201 response code.
+# Returns a list of naming rules created with a 201 response for valdiation in a later step
 
-#     print('Attempting to create Request Naming Rules')
-#     confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
-#     print('---Create Request Naming Rules complete')
+    print('Attempting to create Request Naming Rules')
+    confirmation_dict = postConfigs(constants_dict['post_requestnamingrules_api'], name_values, config_file_path, constants_dict['nameKey_request_name'])
+    print('---Create Request Naming Rules complete')
 
-#     created_request_naming_rules = confirmation_dict
+    created_request_naming_rules = confirmation_dict
 
-# #After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
-# # this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
-# # if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
+#After the naming rules are created, this function is called in order to confirm the that the request naming rules were actually created.
+# this step is required for now as there is an issue with stickiness which causes a write not to stick, from time to time.
+# if all are present, this step is over. If not, the list of items that had to be submitted again are returned in recheck_confirmCreation
 
-#     print('Verifying creation of Request Naming Rules')
-#     confirmCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'])
-#     print('---Request Naming Rules Creation Verification Complete')
+    print('Verifying creation of Request Naming Rules')
+    confirmRequestNamingCreation(constants_dict['post_requestnamingrules_api'], created_request_naming_rules, constants_dict['list_requestnamingrules_api'], constants_dict['request_name_type'],constants_dict['nameKey_request_name'], constants_dict['nameKey_request_name_2'])
+    print('---Request Naming Rules Creation Verification Complete')
 
-# #If there are no request naming rules to be imported, output this message
-# else:
-#     print('There are no request attributes in RequestAttributeList.txt to be imported')
-#     logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
+#If there are no request naming rules to be imported, output this message
+else:
+    print('There are no request attributes in RequestAttributeList.txt to be imported')
+    logging.info(' ==================================================================\n||------  There are no request attributes in RequestAttributeList.txt to be imported\n========================================================================')
 
 
 # =========================================================

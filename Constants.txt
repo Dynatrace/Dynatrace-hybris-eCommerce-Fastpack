@@ -13,4 +13,5 @@ request_attr_type : values
 request_name_type : values
 nameKey_custom_svc : name
 nameKey_request_attr : name
-nameKey_request_name : name
+nameKey_request_name : namingPattern
+nameKey_request_name_2 : id
