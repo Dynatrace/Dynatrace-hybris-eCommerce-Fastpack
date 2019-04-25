@@ -26,6 +26,13 @@ This script was designed to be re-usable for deploying any Custom Services, Requ
     * Located at Settings -> Integration -> Dynatrace API
 * A PLUGIN API token from the Dynatrace Tenant
   * Located at Settings -> Monitoring -> Monitored technologies -> Custom plugins
+* Enable or Disable real-time updates to Java and PHP services:
+  * Custom Services and some Request Attributes require an instrumentation change on your running application. Although the changes in this fastpack are very light-weight, updating the instrumentation on a running application can cause a temporary performance impact. 
+    * For ***non-production environments***, if no critical testing is taking place, enable the switch pictured below to allow custom services and request attributes to take effect immediately. 
+    * For Production environments, we recommend keeping the switch in the off position, however a restart of your applications will be required for the custom services and request attribute to take effect. 
+
+![alt text](https://github.com/Dynatrace/Dynatrace-hybris-eCommerce-Fastpack/blob/master/images/realTimeUpdates.png)
+
 
 ## How to use the fastpack
 There are 5 parent files in the same directory as the python script and 5 subdirectories that you may interact with. However, if you are using this repository to deploy the Hybris configurations, all you have to do is run the python script
