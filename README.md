@@ -1,6 +1,6 @@
 # Dynatrace-hybris-eCommerce-Fastpack
 
-Current Version supports Dynatrace v1.67+
+Current Version supports Dynatrace v1.72+
 
 This is a Python 3 based script designed to import Custom Service, Request Attribute, and Global Request Naming definitions as well as JMX Plugin Metrics and deploy them to your Dynatrace Tenant through the Configuration API and JMX API. Specifically, the Custom Services, Request Attributes, Global Request Naming Rules and JMX metrics in this repo are for monitoring the Hybris eCommerce environment.
 
@@ -62,10 +62,10 @@ For each group of metrics, for instance, yQueryRegionCache, a separate plugin fi
 Each plugin JSON file **MUST** be named
 >plugin.json
 
-The plugin API imports ZIP files, not JSON files, so this is ok. each unique 'plugin.json' file gets put in a uniquely named ZIP file, like JMX_yQueryRegionCache.zip. These zip files are located in the JMX_metrics sub folder.
+The plugin API imports ZIP files, not JSON files, so this is ok. each unique 'plugin.json' file gets put in a uniquely named ZIP file, like custom.jmx.CreatedPlugin_yDatabase.zip. These zip files are located in the JMX_metrics sub folder.
 
 For each JMX Plugin you want to import, place it's zip file in the JMX_metrics subfolder and add a reference to the jmx_metrics.txt file in the following format:
-> JMX_metrics/\<metricgroup\>.zip
+> JMX_metrics/\<name.of.the.metricgroup.in.theJsonFile.Name_key\>.zip
 
 ## Log Folder
 The log folder is simply the location where the log file will be written. Every time you run the script, a log file will be created with outputs and instructions.
