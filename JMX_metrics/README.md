@@ -4,7 +4,7 @@ All JMX zip files should be stored in the directory /JMX_metrics.
 The files listed in /jmx_metrics.txt will be imported.
 
 To add a file to /jmx_metrics.txt, please use the following format:
-> JMX_metrics/\<metricgroup\>.zip
+> JMX_metrics/\<name.of.the.metricgroup.in.theJsonFile.Name_key\>.zip
 
 Only zip files can be uploaded in this way.
 The name of the actual JMX plugin file contained in the zip file has to be
