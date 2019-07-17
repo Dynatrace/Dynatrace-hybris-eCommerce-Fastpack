@@ -1,6 +1,6 @@
 # Dynatrace-hybris-eCommerce-Fastpack
 
-Current Version supports Dynatrace v1.72+
+Current Version supports Dynatrace v1.72+, please check branches or history for older versions.
 
 This is a Python 3 based script designed to import Custom Service, Request Attribute, and Global Request Naming definitions as well as JMX Plugin Metrics and deploy them to your Dynatrace Tenant through the Configuration API and JMX API. Specifically, the Custom Services, Request Attributes, Global Request Naming Rules and JMX metrics in this repo are for monitoring the Hybris eCommerce environment.
 
