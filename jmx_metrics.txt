@@ -7,4 +7,3 @@ JMX_metrics/custom.jmx.CreatedPlugin_yQueryRegion.zip
 JMX_metrics/custom.jmx.CreatedPlugin_yServlet.zip
 JMX_metrics/custom.jmx.CreatedPlugin_ySessions.zip
 JMX_metrics/custom.jmx.CreatedPlugin_yTaskEngine.zip
-
